@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成績資料處理系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-input-label {
+            display: block;
+            padding: 15px 25px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .file-input-label:hover {
+            background: #764ba2;
+        }
+        .file-name {
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .encoding-selector {
+            margin-top: 10px;
+        }
+        .encoding-selector label {
+            display: inline-block;
+            margin-right: 15px;
+            color: #555;
+        }
+        .encoding-selector input[type="radio"] {
+            margin-right: 5px;
+        }
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .mode-card {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .mode-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        .mode-card.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .mode-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        .mode-card p {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .mode-card .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            margin-top: 15px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .result-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .result-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .result-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .result-info li {
+            padding: 5px 0;
+            color: #555;
+        }
+        .download-section {
+            margin-top: 20px;
+            display: none;
+        }
+        .download-btn {
+            background: #17a2b8;
+            margin-top: 10px;
+            padding: 12px 20px;
+            font-size: 1em;
+        }
+        .download-btn:hover {
+            background: #138496;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 成績資料處理系統</h1>
+        
+        <div class="section">
+            <h2>選擇處理模式</h2>
+            <div class="mode-selector">
+                <div class="mode-card active" id="modeNameList" onclick="selectMode('nameList')">
+                    <div class="icon">🔄</div>
+                    <h3>跑班比對模式</h3>
+                    <p>依據跑班名單Excel檔案篩選學生，其他學生按班級分類</p>
+                </div>
+                <div class="mode-card" id="modeClassOnly" onclick="selectMode('classOnly')">
+                    <div class="icon">🏫</div>
+                    <h3>班級分檔模式</h3>
+                    <p>將CSV檔案中的所有學生依班級分成不同檔案</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="nameListSection">
+            <h2>1️⃣ 上傳跑班名單檔案 (Excel)</h2>
+            <div class="file-input-wrapper">
+                <label class="file-input-label" for="nameListFile">
+                    選擇跑班名單檔案 (.xlsx)
+                </label>
+                <input type="file" id="nameListFile" accept=".xlsx">
+            </div>
+            <div class="file-name" id="nameListFileName">尚未選擇檔案</div>
+        </div>
+
+        <div class="section">
+            <h2 id="csvSectionTitle">2️⃣ 上傳成績CSV檔案</h2>
+            <div class="file-input-wrapper">
+                <label class="file-input-label" for="csvFile">
+                    選擇CSV檔案
+                </label>
+                <input type="file" id="csvFile" accept=".csv">
+            </div>
+            <div class="file-name" id="csvFileName">尚未選擇檔案</div>
+            <div class="encoding-selector">
+                <label><input type="radio" name="encoding" value="UTF-8" checked> UTF-8</label>
+                <label><input type="radio" name="encoding" value="BIG5"> BIG5 (繁體中文)</label>
+            </div>
+        </div>
+
+        <button id="processBtn" disabled>開始處理資料</button>
+
+        <div class="status" id="status"></div>
+
+        <div class="download-section" id="downloadSection">
+            <div class="result-info" id="resultInfo"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        let nameListData = null;
+        let csvData = null;
+        let csvFile_stored = null;
+        let currentMode = 'nameList'; // 'nameList' 或 'classOnly'
+
+        const nameListFile = document.getElementById('nameListFile');
+        const csvFile = document.getElementById('csvFile');
+        const processBtn = document.getElementById('processBtn');
+        const status = document.getElementById('status');
+        const downloadSection = document.getElementById('downloadSection');
+        const nameListSection = document.getElementById('nameListSection');
+        const csvSectionTitle = document.getElementById('csvSectionTitle');
+
+        function selectMode(mode) {
+            currentMode = mode;
+            
+            // 更新UI
+            document.getElementById('modeNameList').classList.remove('active');
+            document.getElementById('modeClassOnly').classList.remove('active');
+            document.getElementById('mode' + (mode === 'nameList' ? 'NameList' : 'ClassOnly')).classList.add('active');
+            
+            // 顯示/隱藏名單上傳區
+            if (mode === 'classOnly') {
+                nameListSection.classList.add('hidden');
+                csvSectionTitle.textContent = '1️⃣ 上傳成績CSV檔案';
+                nameListData = null; // 清除名單資料
+            } else {
+                nameListSection.classList.remove('hidden');
+                csvSectionTitle.textContent = '2️⃣ 上傳成績CSV檔案';
+            }
+            
+            // 重置狀態
+            downloadSection.style.display = 'none';
+            checkReadyToProcess();
+        }
+
+        nameListFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('nameListFileName').textContent = `已選擇: ${file.name}`;
+                readExcelFile(file);
+            }
+        });
+
+        csvFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                csvFile_stored = file;
+                document.getElementById('csvFileName').textContent = `已選擇: ${file.name}`;
+                readCSVFileWithEncoding(file);
+            }
+        });
+
+        document.querySelectorAll('input[name="encoding"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (csvFile_stored) {
+                    readCSVFileWithEncoding(csvFile_stored);
+                }
+            });
+        });
+
+        function readExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    nameListData = jsonData;
+                    console.log('跑班名單資料:', nameListData);
+                    checkReadyToProcess();
+                    showStatus('✅ 跑班名單檔案讀取成功！共 ' + jsonData.length + ' 筆資料', 'success');
+                } catch (error) {
+                    showStatus('❌ 跑班名單檔案讀取失敗: ' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function readCSVFileWithEncoding(file) {
+            const selectedEncoding = document.querySelector('input[name="encoding"]:checked').value;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let text;
+                    
+                    if (selectedEncoding === 'BIG5') {
+                        const bytes = new Uint8Array(e.target.result);
+                        const decoder = new TextDecoder('big5');
+                        text = decoder.decode(bytes);
+                    } else {
+                        text = e.target.result;
+                    }
+                    
+                    Papa.parse(text, {
+                        skipEmptyLines: false,
+                        complete: function(results) {
+                            csvData = results.data;
+                            console.log('CSV資料行數:', csvData.length);
+                            console.log('前3行:', csvData.slice(0, 3));
+                            checkReadyToProcess();
+                            showStatus(`✅ CSV檔案讀取成功（${selectedEncoding}編碼）！共 ${csvData.length} 行`, 'success');
+                        },
+                        error: function(error) {
+                            showStatus('❌ CSV解析失敗: ' + error.message, 'error');
+                        }
+                    });
+                } catch (error) {
+                    showStatus('❌ CSV讀取失敗: ' + error.message + '\n請嘗試切換編碼選項', 'error');
+                }
+            };
+            
+            if (selectedEncoding === 'BIG5') {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file, 'UTF-8');
+            }
+        }
+
+        function checkReadyToProcess() {
+            if (currentMode === 'classOnly') {
+                // 班級分檔模式只需要CSV
+                processBtn.disabled = !csvData;
+            } else {
+                // 跑班比對模式需要兩個檔案
+                processBtn.disabled = !(nameListData && csvData);
+            }
+        }
+
+        processBtn.addEventListener('click', processData);
+
+        function processData() {
+            if (currentMode === 'classOnly') {
+                processClassOnlyMode();
+            } else {
+                processNameListMode();
+            }
+        }
+
+        function processClassOnlyMode() {
+            showStatus('⏳ 正在按班級分檔...', 'info');
+            
+            try {
+                // 找出學生資料表頭
+                let studentDataStartIndex = -1;
+                
+                for (let i = 0; i < csvData.length; i++) {
+                    const row = csvData[i];
+                    if (row && row.length >= 7) {
+                        const hasSubject = row[0] && (row[0].includes('科目') || row[0].includes('代號'));
+                        const hasSeat = row[4] && row[4].includes('座號');
+                        const hasName = row[6] && row[6].includes('姓名');
+                        
+                        if (hasSubject && hasSeat && hasName) {
+                            studentDataStartIndex = i;
+                            console.log('✓ 找到學生資料表頭於第', i + 1, '行:', row);
+                            break;
+                        }
+                    }
+                }
+
+                if (studentDataStartIndex === -1) {
+                    throw new Error('找不到學生資料表頭。請檢查CSV檔案格式或嘗試更換編碼');
+                }
+
+                const headers = csvData[studentDataStartIndex];
+                const classIndex = 3;
+                const nameIndex = 6;
+                
+                // 依班級分類所有學生
+                const classesByName = {};
+                
+                for (let i = studentDataStartIndex + 1; i < csvData.length; i++) {
+                    const row = csvData[i];
+                    if (row && row.length > nameIndex && row[nameIndex] && row[nameIndex].trim() !== '') {
+                        const className = row[classIndex] || '未知班級';
+                        
+                        if (!classesByName[className]) {
+                            classesByName[className] = [headers];
+                        }
+                        classesByName[className].push(row);
+                    }
+                }
+
+                const classCount = Object.keys(classesByName).length;
+                console.log('✓ 共找到', classCount, '個班級');
+
+                if (classCount === 0) {
+                    throw new Error('沒有找到任何班級資料');
+                }
+
+                // 生成下載檔案
+                generateClassFiles(classesByName);
+                
+                showStatus(`✅ 處理完成！共分成 ${classCount} 個班級`, 'success');
+            } catch (error) {
+                console.error('❌ 錯誤:', error);
+                showStatus('❌ 處理失敗: ' + error.message, 'error');
+            }
+        }
+
+        function processNameListMode() {
+            showStatus('⏳ 正在處理跑班資料...', 'info');
+            
+            try {
+                let studentDataStartIndex = -1;
+                
+                for (let i = 0; i < csvData.length; i++) {
+                    const row = csvData[i];
+                    if (row && row.length >= 7) {
+                        const hasSubject = row[0] && (row[0].includes('科目') || row[0].includes('代號'));
+                        const hasSeat = row[4] && row[4].includes('座號');
+                        const hasName = row[6] && row[6].includes('姓名');
+                        
+                        if (hasSubject && hasSeat && hasName) {
+                            studentDataStartIndex = i;
+                            console.log('✓ 找到學生資料表頭於第', i + 1, '行:', row);
+                            break;
+                        }
+                    }
+                }
+
+                if (studentDataStartIndex === -1) {
+                    throw new Error('找不到學生資料表頭。請檢查CSV檔案格式或嘗試更換編碼');
+                }
+
+                const headers = csvData[studentDataStartIndex];
+                const classIndex = 3;
+                const nameIndex = 6;
+                
+                const studentRows = [];
+                
+                for (let i = studentDataStartIndex + 1; i < csvData.length; i++) {
+                    const row = csvData[i];
+                    if (row && row.length > nameIndex && row[nameIndex] && row[nameIndex].trim() !== '') {
+                        studentRows.push(row);
+                    }
+                }
+
+                console.log('✓ 共收集到', studentRows.length, '位學生資料');
+
+                const nameListSet = new Set();
+                nameListData.forEach(item => {
+                    if (item['姓名']) {
+                        nameListSet.add(item['姓名'].trim());
+                    }
+                });
+                
+                console.log('✓ 跑班名單學生:', Array.from(nameListSet));
+
+                const matchedStudents = [headers];
+                const remainingByClass = {};
+
+                for (let row of studentRows) {
+                    const studentName = row[nameIndex] ? row[nameIndex].trim() : '';
+                    const className = row[classIndex] || '未知班級';
+                    
+                    if (nameListSet.has(studentName)) {
+                        matchedStudents.push(row);
+                        console.log('找到跑班學生:', studentName);
+                    } else {
+                        if (!remainingByClass[className]) {
+                            remainingByClass[className] = [headers];
+                        }
+                        remainingByClass[className].push(row);
+                    }
+                }
+
+                const matchedCount = matchedStudents.length - 1;
+                console.log('✓ 符合跑班名單:', matchedCount, '人');
+
+                if (matchedCount === 0) {
+                    throw new Error('沒有找到任何符合跑班名單的學生！請檢查姓名是否相符');
+                }
+
+                generateDownloadFiles(matchedStudents, remainingByClass);
+                
+                showStatus(`✅ 處理完成！找到 ${matchedCount} 位跑班學生`, 'success');
+            } catch (error) {
+                console.error('❌ 錯誤:', error);
+                showStatus('❌ 處理失敗: ' + error.message, 'error');
+            }
+        }
+
+        function generateClassFiles(classesByName) {
+            downloadSection.style.display = 'block';
+            downloadSection.innerHTML = '<div class="result-info" id="resultInfo"></div>';
+            
+            const classCount = Object.keys(classesByName).length;
+            let totalStudents = 0;
+            
+            let infoHTML = '<h3>✅ 班級分檔結果</h3><ul>';
+            infoHTML += `<li><strong>🏫 班級數量:</strong> ${classCount} 個</li>`;
+            infoHTML += '</ul><h3>📚 各班級人數</h3><ul>';
+            
+            const sortedClasses = Object.keys(classesByName).sort();
+            for (let className of sortedClasses) {
+                const classData = classesByName[className];
+                const classCSV = Papa.unparse(classData);
+                const studentCount = classData.length - 1;
+                totalStudents += studentCount;
+                
+                createDownloadButton(`${className}.csv`, classCSV, `📥 ${className} (${studentCount}人)`);
+                infoHTML += `<li><strong>${className}:</strong> ${studentCount} 人</li>`;
+            }
+            
+            infoHTML = infoHTML.replace('班級數量:</strong> ' + classCount, 
+                                       '班級數量:</strong> ' + classCount + ' 個，共 ' + totalStudents + ' 人');
+            infoHTML += '</ul>';
+            document.getElementById('resultInfo').innerHTML = infoHTML;
+        }
+
+        function generateDownloadFiles(matchedStudents, remainingByClass) {
+            downloadSection.style.display = 'block';
+            downloadSection.innerHTML = '<div class="result-info" id="resultInfo"></div>';
+            
+            const matchedCount = matchedStudents.length - 1;
+            
+            let infoHTML = '<h3>✅ 跑班比對結果</h3><ul>';
+            infoHTML += `<li><strong>🔄 跑班學生數量:</strong> ${matchedCount} 人</li>`;
+            infoHTML += `<li><strong>🏫 原班級數量:</strong> ${Object.keys(remainingByClass).length} 個</li>`;
+            infoHTML += '</ul><h3>📚 各班級人數分布</h3><ul>';
+            
+            const matchedCSV = Papa.unparse(matchedStudents);
+            createDownloadButton('跑班學生成績.csv', matchedCSV, `📥 下載跑班學生成績 (${matchedCount}人)`);
+            
+            const sortedClasses = Object.keys(remainingByClass).sort();
+            for (let className of sortedClasses) {
+                const classData = remainingByClass[className];
+                const classCSV = Papa.unparse(classData);
+                const studentCount = classData.length - 1;
+                createDownloadButton(`${className}_原班學生.csv`, classCSV, `📥 ${className} (${studentCount}人)`);
+                infoHTML += `<li><strong>${className}:</strong> ${studentCount} 人</li>`;
+            }
+            
+            infoHTML += '</ul>';
+            document.getElementById('resultInfo').innerHTML = infoHTML;
+        }
+
+        function createDownloadButton(filename, content, buttonText) {
+            const btn = document.createElement('button');
+            btn.className = 'download-btn';
+            btn.textContent = buttonText;
+            btn.onclick = function() {
+                downloadFile(filename, content);
+            };
+            downloadSection.appendChild(btn);
+        }
+
+        function downloadFile(filename, content) {
+            const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

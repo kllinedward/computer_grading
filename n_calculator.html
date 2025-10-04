@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n 值計算器</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h1 {
+            color: #1a2b4d;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        .formula {
+            font-family: "Courier New", Courier, monospace;
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            color: #495057;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        input[type="number"]:focus {
+            border-color: #80bdff;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        button {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>倒扣 n 值計算器</h1>
+        <div class="formula">(1/5 + 1/n) * P = 扣分</div>
+
+        <div class="input-group">
+            <label for="pScore">題目的總分 (P)</label>
+            <input type="number" id="pScore" placeholder="例如: 8" step="any">
+        </div>
+
+        <div class="input-group">
+            <label for="initialDeduction">答錯一個選項的預期扣分</label>
+            <input type="number" id="initialDeduction" placeholder="例如: 2" step="any">
+        </div>
+
+        <button onclick="calculateNValue()">計算 n 值</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculateNValue() {
+            const pScoreInput = document.getElementById('pScore');
+            const deductionInput = document.getElementById('initialDeduction');
+            const resultDiv = document.getElementById('result');
+
+            // 清除上次的結果和樣式
+            resultDiv.innerHTML = '';
+            resultDiv.className = '';
+
+            const pScore = parseFloat(pScoreInput.value);
+            const initialDeduction = parseFloat(deductionInput.value);
+            
+            // --- 輸入驗證 ---
+            if (isNaN(pScore) || isNaN(initialDeduction)) {
+                resultDiv.innerHTML = '錯誤：請確保兩個欄位都已輸入有效的數字。';
+                resultDiv.className = 'error';
+                return;
+            }
+            if (pScore <= 0 || initialDeduction <= 0) {
+                resultDiv.innerHTML = '錯誤：分數和扣分都必須是正數。';
+                resultDiv.className = 'error';
+                return;
+            }
+            if (initialDeduction >= pScore) {
+                resultDiv.innerHTML = `錯誤：扣分 (${initialDeduction}) 不應大於或等於總分 (${pScore})。`;
+                resultDiv.className = 'error';
+                return;
+            }
+
+            // --- 核心計算邏輯 ---
+            // 使用極小值 epsilon 來比較浮點數是否為整數
+            const epsilon = 1e-9;
+            
+            const denominator = 5 * initialDeduction - pScore;
+            let n = -1; // 預設為無效值
+
+            if (denominator > 0) {
+                n = (5 * pScore) / denominator;
+            }
+
+            // 判斷 n 是否為正整數
+            if (n > 0 && Math.abs(n - Math.round(n)) < epsilon) {
+                resultDiv.innerHTML = `<strong>計算成功！</strong><br>
+                                     當題目總分為 ${pScore} 分，錯一個選項扣 ${initialDeduction} 分時，<br>
+                                     算出的 n 值為正整數: <strong>${Math.round(n)}</strong>`;
+                resultDiv.className = 'success';
+            } else {
+                // 如果 n 不是正整數，開始尋找最接近的解
+                resultDiv.innerHTML = '計算出的 n 值不是正整數，正在為您尋找最接近的建議扣分...';
+                resultDiv.className = 'info';
+
+                let searchStep = 0.1;
+                let iteration = 1;
+                
+                // 使用 setTimeout 避免瀏覽器因長時間計算而卡頓，並顯示搜索中的訊息
+                setTimeout(() => {
+                    while (iteration < 500) { // 設定最大搜索次數以避免無限循環
+                        // 檢查較低的扣分值 (優先檢查距離較近的)
+                        const lowerDeduction = initialDeduction - iteration * searchStep;
+                        if (lowerDeduction > 0) {
+                            const denLower = 5 * lowerDeduction - pScore;
+                            if (denLower > 0) {
+                                const nLower = (5 * pScore) / denLower;
+                                if (nLower > 0 && Math.abs(nLower - Math.round(nLower)) < epsilon) {
+                                    resultDiv.innerHTML = `<strong>找到了最接近的解！</strong><br>
+                                                         建議將「錯一個選項的扣分」調整為: <strong>${lowerDeduction.toFixed(1)}</strong><br>
+                                                         如此一來，對應的 n 值為正整數: <strong>${Math.round(nLower)}</strong>`;
+                                    resultDiv.className = 'success';
+                                    return; // 找到解答，結束函式
+                                }
+                            }
+                        }
+
+                        // 檢查較高的扣分值
+                        const upperDeduction = initialDeduction + iteration * searchStep;
+                        const denUpper = 5 * upperDeduction - pScore;
+                        if (denUpper > 0) {
+                            const nUpper = (5 * pScore) / denUpper;
+                            if (nUpper > 0 && Math.abs(nUpper - Math.round(nUpper)) < epsilon) {
+                                resultDiv.innerHTML = `<strong>找到了最接近的解！</strong><br>
+                                                     建議將「錯一個選項的扣分」調整為: <strong>${upperDeduction.toFixed(1)}</strong><br>
+                                                     如此一來，對應的 n 值為正整數: <strong>${Math.round(nUpper)}</strong>`;
+                                resultDiv.className = 'success';
+                                return; // 找到解答，結束函式
+                            }
+                        }
+                        
+                        iteration++;
+                    }
+                    
+                    // 如果循環結束仍未找到解
+                    resultDiv.innerHTML = '在 ±50 分的合理範圍內找不到解，請檢查輸入的數值是否合理。';
+                    resultDiv.className = 'error';
+                }, 50); // 延遲50毫秒執行，讓 "尋找中" 的訊息能先顯示出來
+            }
+        }
+    </script>
+
+</body>
+</html>
