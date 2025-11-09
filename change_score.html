@@ -780,6 +780,7 @@
                         <br><strong>劃卡格數：</strong><span id="gridCount"></span> 格
                     </div>
                     
+                    <!-- [修正] 重新加回被誤刪的「自動答案預覽」區塊 -->
                     <div id="autoAnswerSection" style="display: none;">
                         <div class="preview-section">
                             <h4>✓ 已自動提取標準答案（從學生資料中）：</h4>
@@ -789,6 +790,12 @@
                                 <br>來源：<span id="answerSource"></span>
                             </p>
                         </div>
+                    </div>
+
+                    <div id="manualAnswerToggle" style="display: none; margin-top: 15px;">
+                        <a href="#" onclick="toggleManualAnswer(event)" style="color: #667eea; text-decoration: none; font-weight: bold; font-size: 14px;">
+                            &raquo; 手動修改標準答案
+                        </a>
                     </div>
 
                     <div class="answer-input-section">
@@ -877,9 +884,9 @@
                     
                     <div class="range-selector" id="rangeSelector" style="display: none;">
                         <span>從第</span>
-                        <input type="number" id="rangeStart" min="1" max="50" placeholder="1">
+                        <input type="number" id="rangeStart" min="1" placeholder="1">
                         <span>格到第</span>
-                        <input type="number" id="rangeEnd" min="1" max="50" placeholder="10">
+                        <input type="number" id="rangeEnd" min="1" placeholder="結束格">
                         <span>格</span>
                         <button class="btn btn-small" id="selectRange">選取範圍</button>
                     </div>
@@ -1272,17 +1279,36 @@
                     document.getElementById('gridCount').textContent = totalGrids;
                     document.getElementById('requiredLength').textContent = totalGrids;
                     
+                    const manualAnswerSection = document.querySelector('.answer-input-section');
+                    const manualAnswerToggle = document.getElementById('manualAnswerToggle');
+                    const autoAnswerSection = document.getElementById('autoAnswerSection'); // [修正] 取得自動答案區塊
+                    const codeReference = document.querySelector('.code-reference'); // [新增] 取得代碼表區塊
+
                     if (standardAnswer) {
+                        // [修正] 重新加回：確保所有欄位都被正確填入
                         document.getElementById('answerPreview').textContent = standardAnswer;
                         document.getElementById('answerLength').textContent = standardAnswer.length;
                         document.getElementById('answerSource').textContent = standardAnswerSource;
-                        document.getElementById('autoAnswerSection').style.display = 'block';
-                        document.getElementById('manualAnswerTitle').textContent = '或手動修改標準答案：';
+                        
+                        autoAnswerSection.style.display = 'block'; // [修正] 顯示自動答案
                         document.getElementById('nextStep1').disabled = false;
+
+                        // [修改] 偵測到答案，預設隱藏手動輸入框
+                        manualAnswerSection.style.display = 'none';
+                        codeReference.style.display = 'none'; // [修改] 一併隱藏代碼表
+                        manualAnswerToggle.style.display = 'block';
+                        manualAnswerToggle.querySelector('a').textContent = '» 手動修改標準答案';
+                        document.getElementById('manualAnswerTitle').textContent = '手動修改標準答案：'; // 更新標題
+                        
                     } else {
-                        document.getElementById('autoAnswerSection').style.display = 'none';
+                        autoAnswerSection.style.display = 'none'; // [修正] 隱藏自動答案
                         document.getElementById('manualAnswerTitle').textContent = '⚠️ 沒有找到標準答案卡，請手動輸入標準答案：';
                         document.getElementById('nextStep1').disabled = true;
+
+                        // [修改] 未偵測到答案，顯示手動輸入框
+                        manualAnswerSection.style.display = 'block';
+                        codeReference.style.display = 'block'; // [修改] 顯示代碼表
+                        manualAnswerToggle.style.display = 'none';
                     }
                     
                     document.getElementById('fileInfo').style.display = 'block';
@@ -1330,14 +1356,53 @@
             
             standardAnswer = answer;
             standardAnswerSource = '手動輸入';
+            
+            // [修正] 確保手動設定時，也會更新「自動答案預覽」區塊
             document.getElementById('answerPreview').textContent = standardAnswer;
             document.getElementById('answerLength').textContent = standardAnswer.length;
             document.getElementById('answerSource').textContent = standardAnswerSource;
-            document.getElementById('autoAnswerSection').style.display = 'block';
+            document.getElementById('autoAnswerSection').style.display = 'block'; // 顯示預覽區塊
+
             document.getElementById('manualAnswerTitle').textContent = '✓ 已設定標準答案：';
             document.getElementById('nextStep1').disabled = false;
             
+            // [修改] 手動設定後，顯示切換按鈕並隱藏輸入框
+            const manualAnswerSection = document.querySelector('.answer-input-section');
+            const manualAnswerToggle = document.getElementById('manualAnswerToggle');
+            const codeReference = document.querySelector('.code-reference'); // [新增] 取得代碼表區塊
+            
+            manualAnswerSection.style.display = 'none';
+            codeReference.style.display = 'none'; // [修改] 一併隱藏代碼表
+            manualAnswerToggle.style.display = 'block';
+            manualAnswerToggle.querySelector('a').textContent = '» 檢視/修改手動答案';
+
             showSuccess('標準答案設定成功');
+        }
+
+        // [新增] 用於展開/隱藏手動輸入框
+        function toggleManualAnswer(event) {
+            event.preventDefault(); // 停止連結跳轉
+            const manualAnswerSection = document.querySelector('.answer-input-section');
+            const codeReference = document.querySelector('.code-reference'); // [新增] 取得代碼表區塊
+            const link = event.target;
+            
+            if (manualAnswerSection.style.display === 'none') {
+                manualAnswerSection.style.display = 'block';
+                codeReference.style.display = 'block'; // [修改] 一併顯示代碼表
+                link.textContent = '« 隱藏手動輸入';
+                // 如果標題不是"已設定"，就更新它
+                if (!document.getElementById('manualAnswerTitle').textContent.startsWith('✓')) {
+                    document.getElementById('manualAnswerTitle').textContent = '手動修改/輸入標準答案：';
+                }
+            } else {
+                manualAnswerSection.style.display = 'none';
+                codeReference.style.display = 'none'; // [修改] 一併隱藏代碼表
+                if (standardAnswerSource === '手動輸入') {
+                    link.textContent = '» 檢視/修改手動答案';
+                } else {
+                    link.textContent = '» 手動修改標準答案';
+                }
+            }
         }
 
         function initializeGridEditor() {
@@ -1359,6 +1424,11 @@
             container.innerHTML = '';
             
             grids.forEach((grid, index) => {
+                // [修改] 如果標準答案是 '=' 或 '_' (有些讀卡機會用_)，就不要顯示那個格子
+                if (grid.answer === '=' || grid.answer === '_') {
+                    return; // 跳過這個格子，不建立
+                }
+
                 const cell = document.createElement('div');
                 cell.className = 'grid-cell';
                 cell.dataset.index = index;
@@ -1558,6 +1628,13 @@
             
             document.getElementById('step' + step).classList.add('active');
             document.getElementById('dot' + step).classList.add('active');
+            
+            if (step === 2) {
+                // [修改] 根據偵測到的總格數(totalGrids)，動態設定範圍輸入的最大值
+                document.getElementById('rangeStart').max = totalGrids;
+                document.getElementById('rangeEnd').max = totalGrids;
+                document.getElementById('rangeEnd').placeholder = totalGrids;
+            }
             
             for (let i = 1; i < step; i++) {
                 document.getElementById('dot' + i).classList.add('completed');
@@ -2005,8 +2082,19 @@
                 csv += `"${科目代號}","${科目簡稱}","","底標分數","${底標}"\n`;
                 
                 // 各班統計
-                Object.keys(班級資料).sort().forEach(班級名稱 => {
-                    const 班級 = 班級資料[班級名稱];
+                // [修改] 偵錯：原本是 Object.keys(班級資料).sort().forEach(班級名稱 => {
+                // [修改] 這樣會依「班級簡稱」排序，而不是「班級代號」
+                // [修改] 改為先取出所有班級物件，再依「班級代號」排序
+                const 班級陣列 = Object.values(班級資料);
+                
+                // 依 班級代號 排序 (例如 H101, H102...)
+                班級陣列.sort((a, b) => {
+                    return (a.班級代號 || '').localeCompare(b.班級代號 || '');
+                });
+
+                班級陣列.forEach(班級 => {
+                    // const 班級 = 班級資料[班級名稱]; // [修改] 已不需要
+                    const 班級名稱 = 班級.班級簡稱; // [修改] 從排序好的物件中取得班級簡稱
                     const 班級平均 = 班級.分數.reduce((a, b) => a + b, 0) / 班級.學生人數;
                     const 班級最高 = Math.max(...班級.分數);
                     const 班級變異數 = 班級.分數.reduce((sum, score) => sum + Math.pow(score - 班級平均, 2), 0) / 班級.學生人數;
@@ -2019,12 +2107,14 @@
                 csv += '\n';
                 
                 // ★ 學生成績明細的欄位名稱
+                // [修改] 調整欄位以符合需求
                 const studentHeaders = ['科目代號', '科目簡稱', '班級代號', '班級簡稱', '座號', '學號', '姓名', '性別', 
-                               '原作答成績', '新作答成績', '分數差異', '班級名次', '全部名次'];
+                               '新作答成績', '班級名次', '全部名次', '學生答案', '作答情形'];
                 csv += studentHeaders.join(',') + '\n';
                 
                 // 學生成績資料
                 processedData.forEach(row => {
+                    // [修改] 調整輸出的資料對應
                     const values = [
                         row['科目代號'] || '',
                         row['科目簡稱'] || '',
@@ -2034,11 +2124,11 @@
                         row['學號'] || '',
                         row['姓名'] || '',
                         row['性別'] || '',
-                        row['原分數'] || '',
                         row['新分數'] || '',
-                        row['分數差異'] || '',
                         row['班級名次'] || '',
-                        row['全部名次'] || ''
+                        row['全部名次'] || '',
+                        row['學生答案'] || '',
+                        row['作答情形'] || ''
                     ];
                     csv += values.map(v => `"${v}"`).join(',') + '\n';
                 });
