@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>電腦閱卷多選題改分系統</title>
+    <title>電腦閱卷改分系統</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -83,6 +83,7 @@
         .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
         .btn-secondary { background: #6c757d; }
         .btn-danger { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); }
+        .btn-special { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
         .btn-small { padding: 6px 15px; font-size: 14px; }
         .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
@@ -154,6 +155,7 @@
             margin-bottom: 20px;
             user-select: none;
         }
+        /* ★ 格子需要 position:relative 以放置徽章 */
         .grid-cell {
             aspect-ratio: 1;
             border: 2px solid #e0e0e0;
@@ -167,6 +169,7 @@
             background: white;
             padding: 5px;
             font-size: 11px;
+            position: relative;
         }
         .grid-cell:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102,126,234,0.3); }
         .grid-cell .grid-number { font-weight: bold; font-size: 13px; }
@@ -183,6 +186,23 @@
             border-color: #667eea !important;
             transform: scale(0.95);
         }
+
+        /* ★ 特殊設定徽章 */
+        .special-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 1px 3px;
+            border-radius: 3px;
+            line-height: 1.3;
+            pointer-events: none;
+        }
+        .badge-bonus   { background: #ff9800; color: white; }
+        .badge-exclude { background: #9e9e9e; color: white; }
+        .badge-multi   { background: #4caf50; color: white; }
+
         .toolbar {
             background: white;
             padding: 15px;
@@ -228,24 +248,21 @@
             padding: 12px 28px;
             border-radius: 25px;
             font-size: 15px;
-            z-index: 3000;
+            z-index: 4000;
             opacity: 0;
             transition: all 0.35s ease;
             pointer-events: none;
         }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* ★ 自訂確認 Modal */
+        /* 自訂確認 Modal */
         .confirm-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0,0,0,0.55);
-            z-index: 2500;
+            z-index: 3000;
             align-items: center;
             justify-content: center;
         }
@@ -262,6 +279,160 @@
         .confirm-box .confirm-icon { font-size: 48px; margin-bottom: 15px; }
         .confirm-box p { font-size: 16px; color: #333; margin-bottom: 25px; line-height: 1.6; white-space: pre-line; }
         .confirm-actions { display: flex; justify-content: center; gap: 15px; }
+
+        /* ★ 特殊答案設定 Modal */
+        .special-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2800;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .special-overlay.show { display: block; }
+        .special-box {
+            background: white;
+            border-radius: 14px;
+            max-width: 820px;
+            width: 100%;
+            margin: 20px auto;
+            box-shadow: 0 12px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .special-header {
+            background: linear-gradient(135deg, #ff9800 0%, #e65100 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .special-header h3 { font-size: 18px; }
+        .special-header .sclose { font-size: 26px; cursor: pointer; opacity: 0.85; line-height: 1; }
+        .special-header .sclose:hover { opacity: 1; }
+        .special-body { padding: 20px 25px; max-height: 65vh; overflow-y: auto; }
+        .special-footer {
+            padding: 15px 25px;
+            background: #f8f9ff;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .special-footer-left { display: flex; gap: 8px; flex-wrap: wrap; }
+        .special-footer-right { display: flex; gap: 8px; }
+
+        .special-quick-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding: 12px;
+            background: #fff8e1;
+            border-radius: 8px;
+            border-left: 4px solid #ff9800;
+        }
+        .special-quick-bar span { font-size: 13px; font-weight: bold; color: #555; align-self: center; margin-right: 4px; }
+
+        .special-q-row {
+            background: #f8f9ff;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: border-color 0.25s, background 0.25s;
+        }
+        .special-q-row.is-bonus   { border-color: #ff9800; background: #fff8e1; }
+        .special-q-row.is-exclude { border-color: #9e9e9e; background: #f5f5f5; }
+        .special-q-row.is-multi   { border-color: #4caf50; background: #f1f8e9; }
+
+        .special-q-info {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .q-num { font-weight: bold; font-size: 14px; color: #333; min-width: 50px; }
+        .q-type-badge {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .q-type-badge.type-single   { background: #e3f2fd; color: #1565c0; }
+        .q-type-badge.type-multiple { background: #f3e5f5; color: #6a1b9a; }
+        .q-type-badge.type-fill     { background: #fff3e0; color: #bf360c; }
+        .q-type-badge.type-mixed    { background: #fce4ec; color: #880e4f; }
+        .q-grids-label { font-size: 12px; color: #888; }
+        .q-std-ans { font-size: 13px; color: #333; }
+        .q-std-ans strong { font-family: 'Courier New', monospace; color: #1976d2; }
+        .q-decoded { font-size: 11px; color: #888; }
+        .q-pts { font-size: 13px; font-weight: bold; color: #667eea; margin-left: auto; }
+
+        .special-q-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .special-q-options label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px;
+            border-radius: 20px;
+            border: 2px solid #e0e0e0;
+            font-size: 13px;
+            transition: all 0.2s;
+            background: white;
+            user-select: none;
+        }
+        .special-q-options label:hover { border-color: #bbb; }
+        .special-q-options label.selected-normal  { border-color: #667eea; background: #f0f2ff; color: #3949ab; }
+        .special-q-options label.selected-bonus   { border-color: #ff9800; background: #fff8e1; color: #e65100; }
+        .special-q-options label.selected-exclude { border-color: #9e9e9e; background: #f5f5f5; color: #555; }
+        .special-q-options label.selected-multi   { border-color: #4caf50; background: #f1f8e9; color: #2e7d32; }
+        .special-q-options input[type="radio"] { display: none; }
+
+        .multi-answer-panel {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 14px;
+            background: white;
+            border-radius: 8px;
+            border: 1px dashed #4caf50;
+        }
+        .multi-answer-panel.open { display: block; }
+        .multi-answer-panel label { display: block; font-size: 13px; color: #444; margin-bottom: 6px; }
+        .multi-answer-panel input[type="text"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .multi-answer-panel input[type="text"]:focus { border-color: #4caf50; outline: none; }
+        .multi-answer-hint { margin-top: 6px; font-size: 12px; color: #888; line-height: 1.5; }
+        .multi-answer-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; min-height: 24px; }
+        .multi-tag {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            color: #2e7d32;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .no-questions-msg { text-align: center; color: #999; padding: 30px; font-size: 15px; }
 
         .total-score-display {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -323,7 +494,7 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0,0,0,0.7);
-            z-index: 1000;
+            z-index: 2000;
             overflow-y: auto;
         }
         .debug-modal.show { display: block; }
@@ -351,11 +522,38 @@
         .debug-cell { border: 1px solid #e0e0e0; padding: 5px; text-align: center; font-size: 11px; border-radius: 3px; }
         .debug-cell.correct { background: #d4edda; border-color: #28a745; }
         .debug-cell.wrong { background: #f8d7da; border-color: #dc3545; }
+        .debug-cell.excluded { background: #f5f5f5; border-color: #bbb; opacity: 0.6; }
         .debug-cell .cell-number { font-weight: bold; font-size: 10px; }
         .debug-cell .cell-answer { font-size: 10px; }
-        .question-detail { background: #f8f9ff; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #667eea; }
+        .question-detail {
+            background: #f8f9ff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .question-detail.q-bonus   { border-left-color: #ff9800; background: #fff8e1; }
+        .question-detail.q-exclude { border-left-color: #9e9e9e; background: #f5f5f5; opacity: 0.8; }
+        .question-detail.q-multi   { border-left-color: #4caf50; background: #f1f8e9; }
         .verification-section { background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4caf50; }
         .verification-section.error { background: #ffebee; border-left-color: #f44336; }
+
+        .special-summary-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0 0;
+        }
+        .special-chip {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+        .chip-bonus   { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+        .chip-exclude { background: #f5f5f5; color: #616161; border: 1px solid #bdbdbd; }
+        .chip-multi   { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+
         @media (max-width: 768px) {
             .content { padding: 15px; }
             .grid-container { grid-template-columns: repeat(5, 1fr); }
@@ -365,7 +563,7 @@
             .toolbar { flex-direction: column; align-items: stretch; }
             .debug-content { margin: 20px; padding: 15px; }
             .debug-grid { grid-template-columns: repeat(5, 1fr); }
-            .code-table { grid-template-columns: 1fr; }
+            .special-q-options { gap: 6px; }
         }
     </style>
 </head>
@@ -374,10 +572,10 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- ★ 自訂確認 Modal -->
+<!-- 確認 Modal -->
 <div class="confirm-overlay" id="confirmOverlay">
     <div class="confirm-box">
-        <div class="confirm-icon" id="confirmIcon">⚠️</div>
+        <div class="confirm-icon">⚠️</div>
         <p id="confirmMessage">確定要執行此操作嗎？</p>
         <div class="confirm-actions">
             <button class="btn btn-danger" id="confirmOkBtn">確定</button>
@@ -386,12 +584,39 @@
     </div>
 </div>
 
+<!-- ★ 特殊答案設定 Modal -->
+<div class="special-overlay" id="specialOverlay">
+    <div class="special-box">
+        <div class="special-header">
+            <h3>⚙ 特殊答案設定</h3>
+            <span class="sclose" onclick="closeSpecialModal()">×</span>
+        </div>
+        <div class="special-body">
+            <div class="special-quick-bar">
+                <span>批次設定：</span>
+                <button class="btn btn-small btn-special" onclick="batchSetSpecial('bonus')">🎁 全部送分</button>
+                <button class="btn btn-small btn-secondary" onclick="batchSetSpecial('exclude')">⛔ 全部不計分</button>
+                <button class="btn btn-small" style="background:#4caf50" onclick="batchSetSpecial('normal')">↺ 清除全部特殊設定</button>
+            </div>
+            <div id="specialQuestionList"></div>
+        </div>
+        <div class="special-footer">
+            <div class="special-footer-left">
+                <small style="color:#888;align-self:center;">設定後記得按「套用設定」</small>
+            </div>
+            <div class="special-footer-right">
+                <button class="btn btn-special" onclick="applySpecialSettings()">✔ 套用設定</button>
+                <button class="btn btn-secondary" onclick="closeSpecialModal()">✕ 關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <div class="header">
         <h1>📝 電腦閱卷改分系統</h1>
-        <p>支援讀卡機多選題編碼格式，視覺化配分設定</p>
+        <p>支援讀卡機多選題編碼格式，視覺化配分設定，支援特殊答案處理</p>
     </div>
-
     <div class="content">
         <div class="step-indicator">
             <div class="step-dot active" id="dot1">1</div>
@@ -435,7 +660,7 @@
                     <a href="#" onclick="toggleManualAnswer(event)" style="color:#667eea;text-decoration:none;font-weight:bold;font-size:14px;">» 手動修改標準答案</a>
                 </div>
                 <div class="answer-input-section">
-                    <h4 style="margin-bottom:10px;"><span id="manualAnswerTitle">⚠️ 沒有找到標準答案，請手動輸入標準答案：</span></h4>
+                    <h4 style="margin-bottom:10px;"><span id="manualAnswerTitle">⚠️ 沒有找到標準答案，請手動輸入：</span></h4>
                     <p style="font-size:13px;color:#666;margin-bottom:10px;">請輸入 <span id="requiredLength"></span> 個字元的標準答案碼</p>
                     <textarea id="manualAnswer" placeholder="例如：45252NL3N35S25========..."></textarea>
                     <p style="font-size:12px;color:#666;margin-top:5px;">目前字元數：<span id="currentLength">0</span></p>
@@ -484,10 +709,9 @@
             <h2 style="margin-bottom:20px;color:#333;">步驟 2: 設定題型與配分</h2>
             <div class="alert alert-info">
                 <strong>📌 操作說明：</strong><br>
-                1. 選擇選取模式（單格點選 或 範圍輸入）<br>
-                2. 設定題型和配分，點擊「標記」完成設定<br>
-                3. <strong>清除選擇</strong>：取消目前選取的格子（同時移除已套用的標記）<br>
-                4. <strong>重設全部</strong>：清除所有格子的標記，重新開始
+                1. 選格子 → 選題型配分 → 點「標記」完成基本設定<br>
+                2. 點「<strong>⚙ 特殊答案設定</strong>」可設定送分、不計分、多個正確答案<br>
+                3. 格子右上角徽章：<span style="background:#ff9800;color:white;padding:1px 5px;border-radius:3px;font-size:11px;">送</span> 送分　<span style="background:#9e9e9e;color:white;padding:1px 5px;border-radius:3px;font-size:11px;">停</span> 不計分　<span style="background:#4caf50;color:white;padding:1px 5px;border-radius:3px;font-size:11px;">多</span> 多答案
             </div>
             <div id="errorMessage" class="alert alert-danger error-message"></div>
             <div class="selection-mode">
@@ -504,21 +728,11 @@
                 </div>
             </div>
             <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#e3f2fd;border-color:#2196f3;"></div><span>單選題</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#f3e5f5;border-color:#9c27b0;"></div><span>多選題</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#fff3e0;border-color:#ff9800;"></div><span>選填題</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#fce4ec;border-color:#e91e63;"></div><span>混合題</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#667eea;border-color:#667eea;"></div><span>已選取</span>
-                </div>
+                <div class="legend-item"><div class="legend-color" style="background:#e3f2fd;border-color:#2196f3;"></div><span>單選題</span></div>
+                <div class="legend-item"><div class="legend-color" style="background:#f3e5f5;border-color:#9c27b0;"></div><span>多選題</span></div>
+                <div class="legend-item"><div class="legend-color" style="background:#fff3e0;border-color:#ff9800;"></div><span>選填題</span></div>
+                <div class="legend-item"><div class="legend-color" style="background:#fce4ec;border-color:#e91e63;"></div><span>混合題</span></div>
+                <div class="legend-item"><div class="legend-color" style="background:#667eea;border-color:#667eea;"></div><span>已選取</span></div>
             </div>
             <div class="toolbar">
                 <label>題型：</label>
@@ -533,6 +747,7 @@
                 <button class="btn btn-small" id="markGrids">✔ 標記選中的格子</button>
                 <button class="btn btn-small btn-secondary" id="clearSelectionBtn">✕ 清除選擇</button>
                 <button class="btn btn-small btn-danger" id="resetAllBtn">↺ 重設全部</button>
+                <button class="btn btn-small btn-special" id="specialSettingsBtn">⚙ 特殊答案設定</button>
             </div>
             <div class="grid-editor">
                 <div class="grid-container" id="gridContainer"></div>
@@ -584,6 +799,7 @@
             <div class="alert alert-info">
                 <strong>💡 提示：</strong>點擊任一學生的列可查看詳細計分過程（缺考學生不計入平均）
             </div>
+            <div id="specialNotice" style="display:none;"></div>
             <div class="stats-grid" id="statsGrid"></div>
             <div class="table-container">
                 <table id="resultTable"></table>
@@ -608,837 +824,1121 @@
 </div>
 
 <script>
-    const multipleChoiceMap = {
-        'F':'12','G':'13','H':'14','I':'15','J':'23',
-        'K':'24','L':'25','M':'34','N':'35','O':'45',
-        'P':'123','Q':'124','R':'125','S':'134','T':'135',
-        'U':'145','V':'234','W':'235','X':'245','Y':'345',
-        'Z':'1234','*':'1235','$':'1245','%':'1345',',':'2345',
-        '#':'12345','=':'','?':'?','.':'.'
-    };
+// ─────────────────────────────────────────────────────────
+// 多選題代碼對照
+// ─────────────────────────────────────────────────────────
+const multipleChoiceMap = {
+    'F':'12','G':'13','H':'14','I':'15','J':'23',
+    'K':'24','L':'25','M':'34','N':'35','O':'45',
+    'P':'123','Q':'124','R':'125','S':'134','T':'135',
+    'U':'145','V':'234','W':'235','X':'245','Y':'345',
+    'Z':'1234','*':'1235','$':'1245','%':'1345',',':'2345',
+    '#':'12345','=':'','?':'?','.':'.'
+};
 
-    let csvData = [];
-    let standardAnswer = '';
-    let grids = [];
-    let selectedGrids = new Set();
-    let currentStep = 1;
-    let processedData = [];
-    let selectedEncoding = 'BIG5';
-    let totalGrids = 50;
-    let debugData = {};
-    let selectionMode = 'click';
-    let standardAnswerSource = '';
+// ─────────────────────────────────────────────────────────
+// 全域狀態
+// ─────────────────────────────────────────────────────────
+let csvData = [];
+let standardAnswer = '';
+let grids = [];
+let selectedGrids = new Set();
+let currentStep = 1;
+let processedData = [];
+let selectedEncoding = 'BIG5';
+let totalGrids = 50;
+let debugData = {};
+let selectionMode = 'click';
+let standardAnswerSource = '';
 
-    // ─── Toast ───────────────────────────────────
-    let toastTimer = null;
-    function showToast(msg, duration = 2500) {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.classList.add('show');
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+/**
+ * ★ 特殊答案規則
+ * key = String(q.grids[0])，即該題第一個格子的 index
+ * value = { type: 'bonus'|'exclude'|'multi', answers: string[] }
+ */
+let specialRules = {};
+
+// ─────────────────────────────────────────────────────────
+// Toast
+// ─────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, duration = 2500) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+// ─────────────────────────────────────────────────────────
+// 確認 Modal（已修正 callback 執行 Bug）
+// ─────────────────────────────────────────────────────────
+let confirmCallback = null;
+function showConfirm(message, okLabel, onConfirm) {
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmOkBtn').textContent = okLabel || '確定';
+    confirmCallback = onConfirm;
+    document.getElementById('confirmOverlay').classList.add('show');
+}
+function closeConfirm() {
+    document.getElementById('confirmOverlay').classList.remove('show');
+}
+
+// ─────────────────────────────────────────────────────────
+// 輔助
+// ─────────────────────────────────────────────────────────
+function showError(msg) {
+    const d = document.getElementById('errorMessage');
+    d.textContent = msg;
+    d.classList.add('show');
+    setTimeout(() => d.classList.remove('show'), 5000);
+}
+function closeDebugModal() {
+    document.getElementById('debugModal').classList.remove('show');
+}
+
+/** 取得題目的唯一 key（以第一格 index 為 key） */
+function getQuestionKey(q) {
+    return String(q.grids[0]);
+}
+
+/** 取得題目的特殊規則，沒有設定則回傳 null */
+function getSpecialRule(q) {
+    return specialRules[getQuestionKey(q)] || null;
+}
+
+// ─────────────────────────────────────────────────────────
+// CSV 解析
+// ─────────────────────────────────────────────────────────
+function cleanCSVValue(value) {
+    if (!value) return '';
+    let cleaned = value.trim();
+    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+        (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+        cleaned = cleaned.slice(1, -1);
     }
-
-    // ─── 自訂確認 Modal ───────────────────────────
-    let confirmCallback = null;
-
-    function showConfirm(message, okLabel, onConfirm) {
-        document.getElementById('confirmMessage').textContent = message;
-        document.getElementById('confirmOkBtn').textContent = okLabel || '確定';
-        confirmCallback = onConfirm;
-        document.getElementById('confirmOverlay').classList.add('show');
-    }
-
-    function closeConfirm() {
-        document.getElementById('confirmOverlay').classList.remove('show');
-        // ★ 不在這裡 null，由 OK handler 負責
-    }
-
-    // ─── 錯誤 ─────────────────────────────────────
-    function showError(msg) {
-        const d = document.getElementById('errorMessage');
-        d.textContent = msg;
-        d.classList.add('show');
-        setTimeout(() => d.classList.remove('show'), 5000);
-    }
-
-    function closeDebugModal() {
-        document.getElementById('debugModal').classList.remove('show');
-    }
-
-    // ─── CSV 解析 ──────────────────────────────────
-    function cleanCSVValue(value) {
-        if (!value) return '';
-        let cleaned = value.trim();
-        if ((cleaned.startsWith('"') && cleaned.endsWith('"')) ||
-            (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-            cleaned = cleaned.slice(1, -1);
+    cleaned = cleaned.replace(/["""''']/g, '');
+    return cleaned.trim();
+}
+function parseCSVLine(line) {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+            if (inQuotes && line[i+1] === '"') { current += '"'; i++; }
+            else inQuotes = !inQuotes;
+        } else if (ch === ',' && !inQuotes) {
+            values.push(cleanCSVValue(current));
+            current = '';
+        } else {
+            current += ch;
         }
-        cleaned = cleaned.replace(/["""''']/g, '');
-        return cleaned.trim();
     }
-
-    function parseCSVLine(line) {
-        const values = [];
-        let currentValue = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const nextChar = line[i + 1];
-            if (char === '"') {
-                if (inQuotes && nextChar === '"') { currentValue += '"'; i++; }
-                else inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                values.push(cleanCSVValue(currentValue));
-                currentValue = '';
-            } else {
-                currentValue += char;
-            }
-        }
-        values.push(cleanCSVValue(currentValue));
-        return values;
+    values.push(cleanCSVValue(current));
+    return values;
+}
+function isStandardAnswerCard(status) {
+    if (!status) return false;
+    for (const c of status) { if (c !== '.' && c !== '=') return false; }
+    return (status.match(/\./g)||[]).length >= 10 && (status.match(/=/g)||[]).length > 0;
+}
+function isAbsentStudent(student) {
+    return (student['作答成績'] || '').trim() === '';
+}
+function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    csvData = []; standardAnswer = ''; standardAnswerSource = '';
+    let headerIndex = -1, headers = [];
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes('學生答案')) { headerIndex = i; headers = parseCSVLine(lines[i]); break; }
     }
-
-    function isStandardAnswerCard(status) {
-        if (!status || status.length === 0) return false;
-        for (let char of status) {
-            if (char !== '.' && char !== '=') return false;
+    if (headerIndex === -1) throw new Error('找不到學生資料，請確認CSV格式');
+    const ansIdx = headers.indexOf('學生答案');
+    const stsIdx = headers.indexOf('作答情形');
+    const namIdx = headers.indexOf('姓名');
+    const seatIdx = headers.indexOf('座號');
+    for (let i = headerIndex + 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || line.startsWith(',,,')) continue;
+        const vals = parseCSVLine(line);
+        if (vals.length < headers.length) continue;
+        const name = cleanCSVValue(vals[namIdx] || '');
+        const answer = cleanCSVValue(vals[ansIdx] || '');
+        const status = cleanCSVValue(vals[stsIdx] || '');
+        const seat = cleanCSVValue(vals[seatIdx] || '');
+        if (!name) continue;
+        const row = {};
+        headers.forEach((h, idx) => { row[h] = vals[idx] || ''; });
+        csvData.push(row);
+        if (!standardAnswer && status && isStandardAnswerCard(status)) {
+            standardAnswer = answer;
+            totalGrids = answer.length;
+            standardAnswerSource = `${name}（座號 ${seat}）`;
         }
-        const dotCount = (status.match(/\./g) || []).length;
-        const equalCount = (status.match(/=/g) || []).length;
-        return dotCount >= 10 && equalCount > 0;
     }
+    if (!standardAnswer && csvData.length > 0) totalGrids = csvData[0]['學生答案'].length;
+}
 
-    function isAbsentStudent(student) {
-        return (student['作答成績'] || '').trim() === '';
-    }
+// ─────────────────────────────────────────────────────────
+// 事件綁定
+// ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
 
-    function parseCSV(text) {
-        const lines = text.trim().split('\n');
-        csvData = [];
-        standardAnswer = '';
-        standardAnswerSource = '';
-        let headerIndex = -1;
-        let headers = [];
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes('學生答案')) {
-                headerIndex = i;
-                headers = parseCSVLine(lines[i]);
-                break;
-            }
-        }
-        if (headerIndex === -1) throw new Error('找不到學生資料，請確認CSV格式是否正確');
-        const answerIndex = headers.indexOf('學生答案');
-        const statusIndex = headers.indexOf('作答情形');
-        const nameIndex = headers.indexOf('姓名');
-        const seatIndex = headers.indexOf('座號');
-        for (let i = headerIndex + 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line || line.startsWith(',,,')) continue;
-            const values = parseCSVLine(line);
-            if (values.length < headers.length) continue;
-            const name = cleanCSVValue(values[nameIndex] || '');
-            const answer = cleanCSVValue(values[answerIndex] || '');
-            const status = cleanCSVValue(values[statusIndex] || '');
-            const seat = cleanCSVValue(values[seatIndex] || '');
-            if (!name) continue;
-            const row = {};
-            headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
-            csvData.push(row);
-            if (!standardAnswer && status && isStandardAnswerCard(status)) {
-                standardAnswer = answer;
-                totalGrids = answer.length;
-                standardAnswerSource = `${name}（座號 ${seat}）`;
-            }
-        }
-        if (!standardAnswer && csvData.length > 0) {
-            totalGrids = csvData[0]['學生答案'].length;
-        }
-        document.getElementById('parseStatus').textContent =
-            standardAnswer ? '解析成功，已自動提取標準答案' : '解析成功，未找到標準答案卡';
-    }
-
-    // ─── 事件綁定 ──────────────────────────────────
-    document.addEventListener('DOMContentLoaded', function () {
-        setupEventListeners();
+    // 確認 Modal
+    document.getElementById('confirmOkBtn').addEventListener('click', function () {
+        const cb = confirmCallback;
+        confirmCallback = null;
+        closeConfirm();
+        if (cb) cb();
+    });
+    document.getElementById('confirmCancelBtn').addEventListener('click', function () {
+        confirmCallback = null; closeConfirm();
+    });
+    document.getElementById('confirmOverlay').addEventListener('click', function (e) {
+        if (e.target === this) { confirmCallback = null; closeConfirm(); }
     });
 
-    function setupEventListeners() {
+    // 編碼
+    document.querySelectorAll('input[name="encoding"]').forEach(r =>
+        r.addEventListener('change', function () { selectedEncoding = this.value; }));
 
-        // ★★★ 確認 Modal OK 按鈕 ★★★
-        // 關鍵修正：先把 callback 存到 local 變數，再 close，再呼叫
-        document.getElementById('confirmOkBtn').addEventListener('click', function () {
-            const callback = confirmCallback;   // ← 1. 先暫存
-            confirmCallback = null;             // ← 2. 清除全域
-            closeConfirm();                     // ← 3. 關閉 Modal
-            if (callback) callback();           // ← 4. 執行（用暫存的）
-        });
-        document.getElementById('confirmCancelBtn').addEventListener('click', function () {
-            confirmCallback = null;
-            closeConfirm();
-        });
-        document.getElementById('confirmOverlay').addEventListener('click', function (e) {
-            if (e.target === this) {
-                confirmCallback = null;
-                closeConfirm();
-            }
-        });
+    // 選取模式
+    document.querySelectorAll('input[name="selectMode"]').forEach(r =>
+        r.addEventListener('change', function () {
+            selectionMode = this.value;
+            document.getElementById('rangeSelector').style.display =
+                selectionMode === 'range' ? 'flex' : 'none';
+        }));
+    document.getElementById('selectRange').addEventListener('click', selectGridsByRange);
 
-        // 編碼
-        document.querySelectorAll('input[name="encoding"]').forEach(r => {
-            r.addEventListener('change', function () { selectedEncoding = this.value; });
-        });
+    // 上傳
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput  = document.getElementById('fileInput');
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover',  e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', e => {
+        e.preventDefault(); uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
-        // 選取模式
-        document.querySelectorAll('input[name="selectMode"]').forEach(r => {
-            r.addEventListener('change', function () {
-                selectionMode = this.value;
-                document.getElementById('rangeSelector').style.display =
-                    selectionMode === 'range' ? 'flex' : 'none';
-            });
-        });
-        document.getElementById('selectRange').addEventListener('click', selectGridsByRange);
+    document.getElementById('manualAnswer').addEventListener('input', function () {
+        document.getElementById('currentLength').textContent = this.value.length;
+    });
+    document.getElementById('setManualAnswer').addEventListener('click', setManualAnswer);
 
-        // 檔案上傳
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-        });
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) handleFile(e.target.files[0]);
-        });
+    // 步驟導航
+    document.getElementById('nextStep1').addEventListener('click', () => {
+        verifyOriginalScoring();
+        initializeGridEditor();
+        goToStep(2);
+    });
+    document.getElementById('prevStep2').addEventListener('click', () => goToStep(1));
+    document.getElementById('nextStep2').addEventListener('click', () => goToStep(3));
+    document.getElementById('prevStep3').addEventListener('click', () => goToStep(2));
+    document.getElementById('prevStep4').addEventListener('click', () => goToStep(1));
 
-        document.getElementById('manualAnswer').addEventListener('input', function () {
-            document.getElementById('currentLength').textContent = this.value.length;
-        });
-        document.getElementById('setManualAnswer').addEventListener('click', setManualAnswer);
+    // 標記
+    document.getElementById('markGrids').addEventListener('click', markSelectedGrids);
 
-        // 步驟導航
-        document.getElementById('nextStep1').addEventListener('click', () => {
-            verifyOriginalScoring();
-            initializeGridEditor();
-            goToStep(2);
-        });
-        document.getElementById('prevStep2').addEventListener('click', () => goToStep(1));
-        document.getElementById('nextStep2').addEventListener('click', () => goToStep(3));
-        document.getElementById('prevStep3').addEventListener('click', () => goToStep(2));
-        document.getElementById('prevStep4').addEventListener('click', () => goToStep(1));
-
-        // 標記
-        document.getElementById('markGrids').addEventListener('click', markSelectedGrids);
-
-        // ★ 清除選擇：同時清除選取狀態與已套用的標記
-        document.getElementById('clearSelectionBtn').addEventListener('click', function () {
-            if (selectedGrids.size === 0) {
-                showToast('目前沒有選取的格子');
-                return;
-            }
-            const count = selectedGrids.size;
-            let removedMarks = 0;
-
-            selectedGrids.forEach(index => {
-                if (grids[index] && grids[index].type) {
-                    // 若為選填題，同時清除整個群組
-                    if (grids[index].type === 'fill' && grids[index].groupId !== null) {
-                        const gid = grids[index].groupId;
-                        grids.forEach(g => {
-                            if (g.groupId === gid) {
-                                g.type = null; g.points = 0; g.groupId = null;
-                            }
-                        });
-                    } else {
-                        grids[index].type = null;
-                        grids[index].points = 0;
-                        grids[index].groupId = null;
-                    }
-                    removedMarks++;
-                }
-            });
-
-            selectedGrids.clear();
-            renderGridEditor();
-
-            if (removedMarks > 0) {
-                showToast(`✓ 已清除 ${count} 格的選取與標記`);
-            } else {
-                showToast(`✓ 已取消 ${count} 格的選取`);
-            }
-        });
-
-        // ★ 重設全部：用自訂 Modal（callback 修正後正常運作）
-        document.getElementById('resetAllBtn').addEventListener('click', function () {
-            const markedCount = grids.filter(g => g.type).length;
-            if (markedCount === 0 && selectedGrids.size === 0) {
-                showToast('目前沒有任何設定，無需重設');
-                return;
-            }
-            showConfirm(
-                `確定要重設所有格子的題型與配分設定嗎？\n（共 ${markedCount} 格已標記）\n\n此操作無法復原。`,
-                '確定重設',
-                function () {
-                    initializeGridEditor();
-                    showToast('✓ 已重設全部格子設定');
-                }
-            );
-        });
-
-        document.getElementById('processBtn').addEventListener('click', processScores);
-        document.getElementById('downloadBtn').addEventListener('click', downloadResults);
-        document.getElementById('debugModal').addEventListener('click', function (e) {
-            if (e.target === this) closeDebugModal();
-        });
-    }
-
-    // ─── 檔案處理 ──────────────────────────────────
-    function handleFile(file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                parseCSV(e.target.result);
-                document.getElementById('fileName').textContent = file.name;
-                document.getElementById('studentCount').textContent = csvData.length;
-                document.getElementById('gridCount').textContent = totalGrids;
-                document.getElementById('requiredLength').textContent = totalGrids;
-                const manualSection = document.querySelector('.answer-input-section');
-                const manualToggle = document.getElementById('manualAnswerToggle');
-                const autoSection = document.getElementById('autoAnswerSection');
-                const codeRef = document.querySelector('.code-reference');
-                if (standardAnswer) {
-                    document.getElementById('answerPreview').textContent = standardAnswer;
-                    document.getElementById('answerLength').textContent = standardAnswer.length;
-                    document.getElementById('answerSource').textContent = standardAnswerSource;
-                    autoSection.style.display = 'block';
-                    document.getElementById('nextStep1').disabled = false;
-                    manualSection.style.display = 'none';
-                    codeRef.style.display = 'none';
-                    manualToggle.style.display = 'block';
-                    manualToggle.querySelector('a').textContent = '» 手動修改標準答案';
-                    document.getElementById('manualAnswerTitle').textContent = '手動修改標準答案：';
-                } else {
-                    autoSection.style.display = 'none';
-                    document.getElementById('manualAnswerTitle').textContent = '⚠️ 沒有找到標準答案卡，請手動輸入標準答案：';
-                    document.getElementById('nextStep1').disabled = true;
-                    manualSection.style.display = 'block';
-                    codeRef.style.display = 'block';
-                    manualToggle.style.display = 'none';
-                }
-                document.getElementById('fileInfo').style.display = 'block';
-            } catch (error) {
-                showError('檔案解析失敗：' + error.message);
-            }
-        };
-        reader.readAsText(file, selectedEncoding === 'BIG5' ? 'Big5' : 'UTF-8');
-    }
-
-    function selectGridsByRange() {
-        const start = parseInt(document.getElementById('rangeStart').value);
-        const end = parseInt(document.getElementById('rangeEnd').value);
-        if (!start || !end) { showError('請輸入起始和結束格號'); return; }
-        if (start < 1 || end > totalGrids || start > end) {
-            showError(`格號範圍必須在 1-${totalGrids} 之間，且起始不能大於結束`); return;
-        }
-        selectedGrids.clear();
-        for (let i = start - 1; i < end; i++) selectedGrids.add(i);
-        renderGridEditor();
-        showToast(`✓ 已選取第 ${start}～${end} 格（共 ${end - start + 1} 格）`);
-    }
-
-    function setManualAnswer() {
-        const answer = cleanCSVValue(document.getElementById('manualAnswer').value);
-        if (answer.length !== totalGrids) {
-            showError(`標準答案必須是 ${totalGrids} 個字元，目前只有 ${answer.length} 個`); return;
-        }
-        standardAnswer = answer;
-        standardAnswerSource = '手動輸入';
-        document.getElementById('answerPreview').textContent = standardAnswer;
-        document.getElementById('answerLength').textContent = standardAnswer.length;
-        document.getElementById('answerSource').textContent = standardAnswerSource;
-        document.getElementById('autoAnswerSection').style.display = 'block';
-        document.getElementById('manualAnswerTitle').textContent = '✓ 已設定標準答案：';
-        document.getElementById('nextStep1').disabled = false;
-        document.querySelector('.answer-input-section').style.display = 'none';
-        document.querySelector('.code-reference').style.display = 'none';
-        document.getElementById('manualAnswerToggle').style.display = 'block';
-        document.getElementById('manualAnswerToggle').querySelector('a').textContent = '» 檢視/修改手動答案';
-        showToast('✓ 標準答案設定成功');
-    }
-
-    function toggleManualAnswer(event) {
-        event.preventDefault();
-        const manualSection = document.querySelector('.answer-input-section');
-        const codeRef = document.querySelector('.code-reference');
-        const link = event.target;
-        if (manualSection.style.display === 'none') {
-            manualSection.style.display = 'block';
-            codeRef.style.display = 'block';
-            link.textContent = '« 隱藏手動輸入';
-        } else {
-            manualSection.style.display = 'none';
-            codeRef.style.display = 'none';
-            link.textContent = standardAnswerSource === '手動輸入' ? '» 檢視/修改手動答案' : '» 手動修改標準答案';
-        }
-    }
-
-    // ─── 格子編輯器 ────────────────────────────────
-    function initializeGridEditor() {
-        grids = [];
-        selectedGrids.clear();
-        for (let i = 0; i < totalGrids; i++) {
-            grids.push({
-                number: i + 1,
-                answer: standardAnswer[i] || '',
-                type: null,
-                points: 0,
-                groupId: null
-            });
-        }
-        renderGridEditor();
-    }
-
-    function renderGridEditor() {
-        const container = document.getElementById('gridContainer');
-        container.innerHTML = '';
-        grids.forEach((grid, index) => {
-            if (grid.answer === '=' || grid.answer === '_') return;
-            const cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.dataset.index = index;
-            if (grid.type) {
-                cell.classList.add(`type-${grid.type}`);
-                if (grid.groupId !== null) cell.classList.add('grouped');
-            }
-            if (selectedGrids.has(index)) cell.classList.add('selected');
-            cell.innerHTML = `
-                <div class="grid-number">${grid.number}</div>
-                <div class="grid-answer">${grid.answer}</div>
-                ${grid.type ? `<div class="grid-type">${getTypeName(grid.type)} ${grid.points}分</div>` : ''}
-            `;
-            if (selectionMode === 'click') {
-                cell.addEventListener('click', (e) => { e.preventDefault(); toggleGridSelection(index); });
-            }
-            container.appendChild(cell);
-        });
-        updateQuestionSummary();
-        updateTotalScore();
-    }
-
-    function toggleGridSelection(index) {
-        if (selectedGrids.has(index)) selectedGrids.delete(index);
-        else selectedGrids.add(index);
-        renderGridEditor();
-    }
-
-    function getTypeName(type) {
-        return { single:'單選', multiple:'多選', fill:'選填', mixed:'混合' }[type] || '';
-    }
-
-    function isArrayContinuous(arr) {
-        if (arr.length <= 1) return true;
-        const sorted = [...arr].sort((a, b) => a - b);
-        for (let i = 1; i < sorted.length; i++) {
-            if (sorted[i] !== sorted[i - 1] + 1) return false;
-        }
-        return true;
-    }
-
-    function updateTotalScore() {
-        const questions = getQuestionsList();
-        const totalScore = questions.reduce((sum, q) => sum + q.points, 0);
-        const displayDiv = document.getElementById('totalScoreDisplay');
-        if (totalScore > 0) {
-            displayDiv.innerHTML = `
-                <div class="total-score-display">
-                    <h3>試卷總分</h3>
-                    <div class="score">${totalScore.toFixed(1)}</div>
-                    <p style="margin-top:10px;opacity:0.9;">共 ${questions.length} 題</p>
-                </div>`;
-        } else {
-            displayDiv.innerHTML = '';
-        }
-    }
-
-    function markSelectedGrids() {
-        if (selectedGrids.size === 0) { showError('請先選擇格子'); return; }
-        const type = document.getElementById('currentType').value;
-        const points = parseFloat(document.getElementById('currentPoints').value);
-        if (!points || points <= 0) { showError('請輸入有效的配分'); return; }
-        const selectedArray = Array.from(selectedGrids).sort((a, b) => a - b);
-        if (type === 'fill') {
-            if (!isArrayContinuous(selectedArray)) {
-                showError(`選填題的格子必須連續！您選了：${selectedArray.map(i => i + 1).join(', ')}`);
-                return;
-            }
-            const groupId = Date.now();
-            selectedArray.forEach(i => {
-                grids[i].type = type; grids[i].points = points; grids[i].groupId = groupId;
-            });
-        } else {
-            selectedArray.forEach(i => {
-                grids[i].type = type; grids[i].points = points; grids[i].groupId = null;
-            });
-        }
+    // 清除選擇
+    document.getElementById('clearSelectionBtn').addEventListener('click', function () {
+        if (selectedGrids.size === 0) { showToast('目前沒有選取的格子'); return; }
         const count = selectedGrids.size;
+        let removedMarks = 0;
+        selectedGrids.forEach(index => {
+            if (grids[index] && grids[index].type) {
+                if (grids[index].type === 'fill' && grids[index].groupId !== null) {
+                    const gid = grids[index].groupId;
+                    grids.forEach(g => {
+                        if (g.groupId === gid) { g.type = null; g.points = 0; g.groupId = null; }
+                    });
+                } else {
+                    grids[index].type = null; grids[index].points = 0; grids[index].groupId = null;
+                }
+                removedMarks++;
+            }
+        });
         selectedGrids.clear();
         renderGridEditor();
-        showToast(`✓ 已將 ${count} 格標記為「${getTypeName(type)}」，每題 ${points} 分`);
-    }
+        showToast(removedMarks > 0 ? `✓ 已清除 ${count} 格的選取與標記` : `✓ 已取消 ${count} 格的選取`);
+    });
 
-    function updateQuestionSummary() {
-        const summary = document.getElementById('questionSummary');
+    // 重設全部
+    document.getElementById('resetAllBtn').addEventListener('click', function () {
+        const markedCount = grids.filter(g => g.type).length;
+        if (markedCount === 0 && selectedGrids.size === 0) { showToast('目前沒有任何設定，無需重設'); return; }
+        showConfirm(
+            `確定要重設所有格子的題型、配分及特殊設定嗎？\n（共 ${markedCount} 格已標記）\n\n此操作無法復原。`,
+            '確定重設',
+            () => { initializeGridEditor(); showToast('✓ 已重設全部設定（含特殊答案設定）'); }
+        );
+    });
+
+    // ★ 特殊答案設定
+    document.getElementById('specialSettingsBtn').addEventListener('click', function () {
         const questions = getQuestionsList();
-        if (questions.length === 0) {
-            summary.innerHTML = '<div class="alert alert-warning">尚未設定任何題目</div>';
-            return;
-        }
-        let html = '<div class="alert alert-success"><strong>已設定題目：</strong><br>';
-        questions.forEach((q, i) => {
-            html += `${i + 1}. ${q.typeName}：第 ${q.grids.map(g => g + 1).join(',')} 格，${q.points} 分<br>`;
-        });
-        html += '</div>';
-        summary.innerHTML = html;
-    }
+        if (questions.length === 0) { showToast('請先標記題目後再設定特殊答案'); return; }
+        renderSpecialQuestionList(questions);
+        document.getElementById('specialOverlay').classList.add('show');
+    });
 
-    function getQuestionsList() {
-        const questions = [];
-        const processed = new Set();
-        grids.forEach((grid, index) => {
-            if (!grid.type || processed.has(index)) return;
-            if (grid.type === 'fill' && grid.groupId !== null) {
-                const groupGrids = grids.map((g, i) => g.groupId === grid.groupId ? i : -1).filter(i => i !== -1);
-                questions.push({ type: grid.type, typeName: getTypeName(grid.type), grids: groupGrids, points: grid.points });
-                groupGrids.forEach(i => processed.add(i));
-            } else {
-                questions.push({ type: grid.type, typeName: getTypeName(grid.type), grids: [index], points: grid.points });
-                processed.add(index);
-            }
-        });
-        return questions;
-    }
+    document.getElementById('specialOverlay').addEventListener('click', function (e) {
+        if (e.target === this) closeSpecialModal();
+    });
 
-    function goToStep(step) {
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.step-dot').forEach(d => {
-            d.classList.remove('active', 'completed');
-        });
-        document.getElementById('step' + step).classList.add('active');
-        document.getElementById('dot' + step).classList.add('active');
-        if (step === 2) {
-            document.getElementById('rangeStart').max = totalGrids;
-            document.getElementById('rangeEnd').max = totalGrids;
-            document.getElementById('rangeEnd').placeholder = totalGrids;
-        }
-        for (let i = 1; i < step; i++) {
-            document.getElementById('dot' + i).classList.add('completed');
-        }
-        currentStep = step;
-    }
+    document.getElementById('processBtn').addEventListener('click', processScores);
+    document.getElementById('downloadBtn').addEventListener('click', downloadResults);
+    document.getElementById('debugModal').addEventListener('click', function (e) {
+        if (e.target === this) closeDebugModal();
+    });
+});
 
-    function decodeAnswer(code) {
-        if (code === '=' || code === '') return '';
-        if (code === '?' || code === '.') return code;
-        if (code >= '0' && code <= '9') return code;
-        if (code === '-' || code === '+') return code;
-        return multipleChoiceMap[code] || code;
-    }
-
-    function calculateErrorCount(studentCode, correctCode) {
-        const studentAns = decodeAnswer(studentCode);
-        const correctAns = decodeAnswer(correctCode);
-        if (!studentAns || studentAns === '?' || studentAns === '.') return 999;
-        if (!correctAns || correctAns === '.') return 0;
-        const studentChoices = new Set(studentAns.split(''));
-        const correctChoices = new Set(correctAns.split(''));
-        let wrongCount = 0;
-        studentChoices.forEach(c => { if (!correctChoices.has(c)) wrongCount++; });
-        correctChoices.forEach(c => { if (!studentChoices.has(c)) wrongCount++; });
-        return wrongCount;
-    }
-
-    function verifyOriginalScoring() {
-        const questions = getQuestionsList();
-        if (questions.length === 0) return;
-        const scoringRules = {
-            1: parseFloat(document.getElementById('error1').value) || 0,
-            2: parseFloat(document.getElementById('error2').value) || 0,
-            3: parseFloat(document.getElementById('error3').value) || 0,
-            4: parseFloat(document.getElementById('error4').value) || 0,
-        };
-        let allMatch = true;
-        let mismatchCount = 0;
-        const mismatchDetails = [];
-        csvData.forEach(student => {
-            if (isAbsentStudent(student)) return;
-            const studentAnswer = student['學生答案'] || '';
-            const originalScore = parseFloat(student['作答成績'] || 0);
-            let calculatedScore = 0;
-            questions.forEach(q => {
-                if (q.type === 'fill') {
-                    let allCorrect = true;
-                    for (const gi of q.grids) {
-                        if ((studentAnswer[gi] || '=') !== (standardAnswer[gi] || '')) { allCorrect = false; break; }
-                    }
-                    if (allCorrect) calculatedScore += q.points;
-                } else if (q.type === 'multiple') {
-                    const gi = q.grids[0];
-                    const ec = calculateErrorCount(studentAnswer[gi] || '=', standardAnswer[gi] || '');
-                    if (ec === 0) calculatedScore += q.points;
-                    else if (ec < 5) calculatedScore += scoringRules[ec] || 0;
-                } else {
-                    const gi = q.grids[0];
-                    if ((studentAnswer[gi] || '=') === (standardAnswer[gi] || '')) calculatedScore += q.points;
-                }
-            });
-            if (Math.abs(calculatedScore - originalScore) > 0.1) {
-                allMatch = false;
-                mismatchCount++;
-                if (mismatchDetails.length < 5) {
-                    mismatchDetails.push({
-                        name: student['姓名'], seat: student['座號'],
-                        original: originalScore, calculated: calculatedScore.toFixed(1)
-                    });
-                }
-            }
-        });
-        const verificationDiv = document.getElementById('verificationSection');
-        verificationDiv.style.display = 'block';
-        if (allMatch) {
-            verificationDiv.className = 'verification-section';
-            verificationDiv.innerHTML = `<h4 style="color:#4caf50;margin-bottom:10px;">✓ 標準答案驗證成功</h4><p>計算分數與原始讀卡分數完全一致！</p>`;
-        } else {
-            let detailsHtml = mismatchDetails.length > 0
-                ? '<ul style="margin-left:20px;">' + mismatchDetails.map(d =>
-                    `<li>${d.name}（座號${d.seat}）：原始 ${d.original} 分 vs 計算 ${d.calculated} 分</li>`).join('') + '</ul>'
-                : '';
-            verificationDiv.className = 'verification-section error';
-            verificationDiv.innerHTML = `<h4 style="color:#f44336;margin-bottom:10px;">⚠️ 標準答案驗證失敗</h4><p>有 ${mismatchCount} 位學生計算分數不一致</p>${detailsHtml}`;
-        }
-    }
-
-    function showDebugModal(studentIndex) {
-        const student = processedData[studentIndex];
-        const debug = debugData[studentIndex];
-        if (!debug) { showError('找不到計分資料'); return; }
-        const modal = document.getElementById('debugModal');
-        document.getElementById('debugTitle').textContent =
-            `${student['姓名']} (${student['班級簡稱']} ${student['座號']}號)`;
-        if (debug.isAbsent) {
-            document.getElementById('debugBody').innerHTML = `
-                <div class="alert alert-warning" style="font-size:16px;text-align:center;padding:30px;">
-                    <div style="font-size:48px;margin-bottom:15px;">🚫</div>
-                    <strong>此學生缺考</strong><br><br>缺考學生不計分，不計入班級與全體平均。
-                </div>`;
-            modal.classList.add('show'); return;
-        }
-        let html = `
-            <div class="debug-section">
-                <h4>基本資訊</h4>
-                <p><strong>原分數：</strong>${student['原分數']} 分</p>
-                <p><strong>新分數：</strong>${student['新分數']} 分</p>
-                <p><strong>分數差異：</strong>
-                    <span style="color:${parseFloat(student['分數差異'])>=0?'#28a745':'#dc3545'};">
-                        ${student['分數差異']} 分
-                    </span>
-                </p>
-            </div>
-            <div class="debug-section">
-                <h4>答案對照（藍=正確、紅=錯誤）</h4>
-                <div class="debug-grid">`;
-        const maxLen = Math.max(debug.studentAnswer.length, standardAnswer.length);
-        for (let i = 0; i < maxLen; i++) {
-            const sc = debug.studentAnswer[i] || '';
-            const cc = standardAnswer[i] || '';
-            html += `<div class="debug-cell ${sc === cc ? 'correct' : 'wrong'}">
-                <div class="cell-number">${i + 1}</div>
-                <div class="cell-answer">${sc || '?'}</div>
-                <div class="cell-answer" style="color:#666;">(${cc || '?'})</div>
-            </div>`;
-        }
-        html += `</div></div><div class="debug-section"><h4>各題得分明細</h4>`;
-        debug.questionScores.forEach((qs, i) => {
-            html += `<div class="question-detail">
-                <strong>第 ${i + 1} 題 (${qs.typeName})：</strong>格號 ${qs.grids.map(g => g + 1).join(',')}<br>
-                ${qs.detail}<br>
-                <strong>得分：${qs.score} / ${qs.points}</strong>
-            </div>`;
-        });
-        html += `</div><div class="debug-section"><h4>總分</h4>
-            <p style="font-size:24px;font-weight:bold;color:#667eea;">
-                ${debug.questionScores.reduce((s, qs) => s + qs.score, 0).toFixed(1)} 分
-            </p></div>`;
-        document.getElementById('debugBody').innerHTML = html;
-        modal.classList.add('show');
-    }
-
-    function processScores() {
+// ─────────────────────────────────────────────────────────
+// 檔案處理
+// ─────────────────────────────────────────────────────────
+function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
         try {
-            const scoringRules = {
-                1: parseFloat(document.getElementById('error1').value) || 0,
-                2: parseFloat(document.getElementById('error2').value) || 0,
-                3: parseFloat(document.getElementById('error3').value) || 0,
-                4: parseFloat(document.getElementById('error4').value) || 0,
+            parseCSV(e.target.result);
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('studentCount').textContent = csvData.length;
+            document.getElementById('gridCount').textContent = totalGrids;
+            document.getElementById('requiredLength').textContent = totalGrids;
+            const manualSection = document.querySelector('.answer-input-section');
+            const manualToggle  = document.getElementById('manualAnswerToggle');
+            const autoSection   = document.getElementById('autoAnswerSection');
+            const codeRef       = document.querySelector('.code-reference');
+            if (standardAnswer) {
+                document.getElementById('answerPreview').textContent = standardAnswer;
+                document.getElementById('answerLength').textContent  = standardAnswer.length;
+                document.getElementById('answerSource').textContent  = standardAnswerSource;
+                autoSection.style.display = 'block';
+                document.getElementById('nextStep1').disabled = false;
+                manualSection.style.display = 'none';
+                codeRef.style.display = 'none';
+                manualToggle.style.display = 'block';
+                manualToggle.querySelector('a').textContent = '» 手動修改標準答案';
+                document.getElementById('manualAnswerTitle').textContent = '手動修改標準答案：';
+            } else {
+                autoSection.style.display = 'none';
+                document.getElementById('manualAnswerTitle').textContent = '⚠️ 沒有找到標準答案卡，請手動輸入：';
+                document.getElementById('nextStep1').disabled = true;
+                manualSection.style.display = 'block';
+                codeRef.style.display = 'block';
+                manualToggle.style.display = 'none';
+            }
+            document.getElementById('fileInfo').style.display = 'block';
+        } catch (err) { showError('檔案解析失敗：' + err.message); }
+    };
+    reader.readAsText(file, selectedEncoding === 'BIG5' ? 'Big5' : 'UTF-8');
+}
+
+function selectGridsByRange() {
+    const start = parseInt(document.getElementById('rangeStart').value);
+    const end   = parseInt(document.getElementById('rangeEnd').value);
+    if (!start || !end) { showError('請輸入起始和結束格號'); return; }
+    if (start < 1 || end > totalGrids || start > end) { showError(`格號範圍必須在 1-${totalGrids} 之間`); return; }
+    selectedGrids.clear();
+    for (let i = start - 1; i < end; i++) selectedGrids.add(i);
+    renderGridEditor();
+    showToast(`✓ 已選取第 ${start}～${end} 格（共 ${end - start + 1} 格）`);
+}
+
+function setManualAnswer() {
+    const answer = cleanCSVValue(document.getElementById('manualAnswer').value);
+    if (answer.length !== totalGrids) {
+        showError(`標準答案必須是 ${totalGrids} 個字元，目前 ${answer.length} 個`); return;
+    }
+    standardAnswer = answer;
+    standardAnswerSource = '手動輸入';
+    document.getElementById('answerPreview').textContent = standardAnswer;
+    document.getElementById('answerLength').textContent  = standardAnswer.length;
+    document.getElementById('answerSource').textContent  = standardAnswerSource;
+    document.getElementById('autoAnswerSection').style.display = 'block';
+    document.getElementById('manualAnswerTitle').textContent = '✓ 已設定標準答案：';
+    document.getElementById('nextStep1').disabled = false;
+    document.querySelector('.answer-input-section').style.display = 'none';
+    document.querySelector('.code-reference').style.display = 'none';
+    document.getElementById('manualAnswerToggle').style.display = 'block';
+    document.getElementById('manualAnswerToggle').querySelector('a').textContent = '» 檢視/修改手動答案';
+    showToast('✓ 標準答案設定成功');
+}
+
+function toggleManualAnswer(event) {
+    event.preventDefault();
+    const ms = document.querySelector('.answer-input-section');
+    const cr = document.querySelector('.code-reference');
+    const lk = event.target;
+    if (ms.style.display === 'none') {
+        ms.style.display = 'block'; cr.style.display = 'block';
+        lk.textContent = '« 隱藏手動輸入';
+    } else {
+        ms.style.display = 'none'; cr.style.display = 'none';
+        lk.textContent = standardAnswerSource === '手動輸入' ? '» 檢視/修改手動答案' : '» 手動修改標準答案';
+    }
+}
+
+// ─────────────────────────────────────────────────────────
+// 格子編輯器
+// ─────────────────────────────────────────────────────────
+function initializeGridEditor() {
+    grids = [];
+    selectedGrids.clear();
+    specialRules = {}; // ★ 同時清除特殊設定
+    for (let i = 0; i < totalGrids; i++) {
+        grids.push({ number: i + 1, answer: standardAnswer[i] || '', type: null, points: 0, groupId: null });
+    }
+    renderGridEditor();
+}
+
+function renderGridEditor() {
+    const container = document.getElementById('gridContainer');
+    container.innerHTML = '';
+
+    // ★ 建立 gridIndex → specialType 的對應表
+    const specialMap = new Map();
+    getQuestionsList().forEach(q => {
+        const rule = specialRules[getQuestionKey(q)];
+        if (rule) q.grids.forEach(gi => specialMap.set(gi, rule.type));
+    });
+
+    grids.forEach((grid, index) => {
+        if (grid.answer === '=' || grid.answer === '_') return;
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.index = index;
+        if (grid.type) {
+            cell.classList.add(`type-${grid.type}`);
+            if (grid.groupId !== null) cell.classList.add('grouped');
+        }
+        if (selectedGrids.has(index)) cell.classList.add('selected');
+
+        // ★ 特殊規則徽章
+        let badgeHtml = '';
+        if (specialMap.has(index)) {
+            const rt = specialMap.get(index);
+            const cls  = { bonus:'badge-bonus', exclude:'badge-exclude', multi:'badge-multi' }[rt];
+            const text = { bonus:'送',          exclude:'停',            multi:'多'          }[rt];
+            badgeHtml = `<div class="special-badge ${cls}">${text}</div>`;
+        }
+
+        cell.innerHTML = `
+            ${badgeHtml}
+            <div class="grid-number">${grid.number}</div>
+            <div class="grid-answer">${grid.answer}</div>
+            ${grid.type ? `<div class="grid-type">${getTypeName(grid.type)} ${grid.points}分</div>` : ''}
+        `;
+        if (selectionMode === 'click') {
+            cell.addEventListener('click', e => { e.preventDefault(); toggleGridSelection(index); });
+        }
+        container.appendChild(cell);
+    });
+    updateQuestionSummary();
+    updateTotalScore();
+}
+
+function toggleGridSelection(index) {
+    if (selectedGrids.has(index)) selectedGrids.delete(index);
+    else selectedGrids.add(index);
+    renderGridEditor();
+}
+
+function getTypeName(type) {
+    return { single:'單選', multiple:'多選', fill:'選填', mixed:'混合' }[type] || '';
+}
+
+function isArrayContinuous(arr) {
+    if (arr.length <= 1) return true;
+    const s = [...arr].sort((a,b) => a-b);
+    for (let i = 1; i < s.length; i++) if (s[i] !== s[i-1]+1) return false;
+    return true;
+}
+
+function updateTotalScore() {
+    const questions = getQuestionsList();
+    let totalScore = 0, excludedScore = 0;
+    questions.forEach(q => {
+        const rule = specialRules[getQuestionKey(q)];
+        if (rule && rule.type === 'exclude') excludedScore += q.points;
+        else totalScore += q.points;
+    });
+    const displayDiv = document.getElementById('totalScoreDisplay');
+    if (questions.length > 0) {
+        const hasSpecial = Object.keys(specialRules).length > 0;
+        displayDiv.innerHTML = `
+            <div class="total-score-display">
+                <h3>試卷總分</h3>
+                <div class="score">${totalScore.toFixed(1)}</div>
+                <p style="margin-top:10px;opacity:0.9;">共 ${questions.length} 題
+                    ${excludedScore > 0 ? `（不計分題 -${excludedScore.toFixed(1)} 分已扣除）` : ''}
+                </p>
+                ${hasSpecial ? `<p style="font-size:13px;opacity:0.8;margin-top:4px;">★ 含特殊答案設定</p>` : ''}
+            </div>`;
+    } else {
+        displayDiv.innerHTML = '';
+    }
+}
+
+function markSelectedGrids() {
+    if (selectedGrids.size === 0) { showError('請先選擇格子'); return; }
+    const type   = document.getElementById('currentType').value;
+    const points = parseFloat(document.getElementById('currentPoints').value);
+    if (!points || points <= 0) { showError('請輸入有效的配分'); return; }
+    const selArr = Array.from(selectedGrids).sort((a,b) => a-b);
+    if (type === 'fill') {
+        if (!isArrayContinuous(selArr)) {
+            showError(`選填題格子必須連續！您選了：${selArr.map(i=>i+1).join(', ')}`); return;
+        }
+        const gid = Date.now();
+        selArr.forEach(i => { grids[i].type = type; grids[i].points = points; grids[i].groupId = gid; });
+    } else {
+        selArr.forEach(i => { grids[i].type = type; grids[i].points = points; grids[i].groupId = null; });
+    }
+    const count = selectedGrids.size;
+    selectedGrids.clear();
+    renderGridEditor();
+    showToast(`✓ 已將 ${count} 格標記為「${getTypeName(type)}」，每題 ${points} 分`);
+}
+
+function updateQuestionSummary() {
+    const summary   = document.getElementById('questionSummary');
+    const questions = getQuestionsList();
+    if (questions.length === 0) {
+        summary.innerHTML = '<div class="alert alert-warning">尚未設定任何題目</div>';
+        return;
+    }
+    let html = '<div class="alert alert-success"><strong>已設定題目：</strong><br>';
+    questions.forEach((q, i) => {
+        const rule = specialRules[getQuestionKey(q)];
+        let badge = '';
+        if (rule) {
+            if (rule.type === 'bonus')
+                badge = ' <span class="special-chip chip-bonus">🎁 送分</span>';
+            else if (rule.type === 'exclude')
+                badge = ' <span class="special-chip chip-exclude">⛔ 不計分</span>';
+            else if (rule.type === 'multi') {
+                const stdCode = q.grids.map(gi => standardAnswer[gi] || '').join('');
+                const allCodes = [stdCode, ...(rule.answers || [])].join(' / ');
+                badge = ` <span class="special-chip chip-multi">✦ 多答案：${allCodes}</span>`;
+            }
+        }
+        html += `${i+1}. ${q.typeName}：第 ${q.grids.map(g=>g+1).join(',')} 格，${q.points} 分${badge}<br>`;
+    });
+    html += '</div>';
+    summary.innerHTML = html;
+}
+
+function getQuestionsList() {
+    const questions = [];
+    const processed = new Set();
+    grids.forEach((grid, index) => {
+        if (!grid.type || processed.has(index)) return;
+        if (grid.type === 'fill' && grid.groupId !== null) {
+            const groupGrids = grids.map((g,i) => g.groupId === grid.groupId ? i : -1).filter(i => i !== -1);
+            questions.push({ type: grid.type, typeName: getTypeName(grid.type), grids: groupGrids, points: grid.points });
+            groupGrids.forEach(i => processed.add(i));
+        } else {
+            questions.push({ type: grid.type, typeName: getTypeName(grid.type), grids: [index], points: grid.points });
+            processed.add(index);
+        }
+    });
+    return questions;
+}
+
+function goToStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.step-dot').forEach(d => d.classList.remove('active','completed'));
+    document.getElementById('step'+step).classList.add('active');
+    document.getElementById('dot'+step).classList.add('active');
+    if (step === 2) {
+        document.getElementById('rangeStart').max = totalGrids;
+        document.getElementById('rangeEnd').max = totalGrids;
+        document.getElementById('rangeEnd').placeholder = totalGrids;
+    }
+    for (let i = 1; i < step; i++) document.getElementById('dot'+i).classList.add('completed');
+    currentStep = step;
+}
+
+function decodeAnswer(code) {
+    if (code === '=' || code === '') return '';
+    if (code === '?' || code === '.') return code;
+    if ((code >= '0' && code <= '9') || code === '-' || code === '+') return code;
+    return multipleChoiceMap[code] || code;
+}
+
+function calculateErrorCount(studentCode, correctCode) {
+    const sAns = decodeAnswer(studentCode);
+    const cAns = decodeAnswer(correctCode);
+    if (!sAns || sAns === '?' || sAns === '.') return 999;
+    if (!cAns || cAns === '.') return 0;
+    const sSet = new Set(sAns.split(''));
+    const cSet = new Set(cAns.split(''));
+    let wrong = 0;
+    sSet.forEach(c => { if (!cSet.has(c)) wrong++; });
+    cSet.forEach(c => { if (!sSet.has(c)) wrong++; });
+    return wrong;
+}
+
+function verifyOriginalScoring() {
+    const questions = getQuestionsList();
+    if (questions.length === 0) return;
+    const scoringRules = {
+        1: parseFloat(document.getElementById('error1').value)||0,
+        2: parseFloat(document.getElementById('error2').value)||0,
+        3: parseFloat(document.getElementById('error3').value)||0,
+        4: parseFloat(document.getElementById('error4').value)||0,
+    };
+    let mismatches = [], mismatchCount = 0;
+    csvData.forEach(student => {
+        if (isAbsentStudent(student)) return;
+        const sAns = student['學生答案'] || '';
+        const origScore = parseFloat(student['作答成績'] || 0);
+        let calc = 0;
+        questions.forEach(q => {
+            if (q.type === 'fill') {
+                let ok = true;
+                for (const gi of q.grids) { if ((sAns[gi]||'=') !== (standardAnswer[gi]||'')) { ok=false; break; } }
+                if (ok) calc += q.points;
+            } else if (q.type === 'multiple') {
+                const gi = q.grids[0];
+                const ec = calculateErrorCount(sAns[gi]||'=', standardAnswer[gi]||'');
+                if (ec===0) calc += q.points;
+                else if (ec<5) calc += scoringRules[ec]||0;
+            } else {
+                const gi = q.grids[0];
+                if ((sAns[gi]||'=') === (standardAnswer[gi]||'')) calc += q.points;
+            }
+        });
+        if (Math.abs(calc - origScore) > 0.1) {
+            mismatchCount++;
+            if (mismatches.length < 5)
+                mismatches.push({ name:student['姓名'], seat:student['座號'], original:origScore, calculated:calc.toFixed(1) });
+        }
+    });
+    const div = document.getElementById('verificationSection');
+    div.style.display = 'block';
+    if (mismatchCount === 0) {
+        div.className = 'verification-section';
+        div.innerHTML = `<h4 style="color:#4caf50;margin-bottom:10px;">✓ 標準答案驗證成功</h4><p>計算分數與原始讀卡分數完全一致！</p>`;
+    } else {
+        div.className = 'verification-section error';
+        div.innerHTML = `<h4 style="color:#f44336;margin-bottom:10px;">⚠️ 驗證發現差異（共 ${mismatchCount} 人）</h4>
+            <ul style="margin-left:20px;">${mismatches.map(d=>`<li>${d.name}（${d.seat}）：原始 ${d.original} 分 vs 計算 ${d.calculated} 分</li>`).join('')}</ul>`;
+    }
+}
+
+// ─────────────────────────────────────────────────────────
+// ★ 特殊答案設定 Modal
+// ─────────────────────────────────────────────────────────
+function closeSpecialModal() {
+    document.getElementById('specialOverlay').classList.remove('show');
+}
+
+/** 根據題型產生輸入提示 */
+function getMultiAnswerHint(q) {
+    if (q.type === 'fill') {
+        const len = q.grids.length;
+        return `選填題（${len} 格），輸入完整替代答案碼（每組恰好 ${len} 碼），以逗號分隔。例如：12,14`;
+    }
+    if (q.type === 'multiple') {
+        return `多選題，輸入其他可接受的代碼字母（如 J=23、K=24、L=25），以逗號分隔。例如：K,L`;
+    }
+    return `單選/混合題，輸入其他可接受的答案（1~5 或字母），以逗號分隔。例如：3,4`;
+}
+
+/** 渲染特殊設定題目清單 */
+function renderSpecialQuestionList(questions) {
+    const container = document.getElementById('specialQuestionList');
+    if (questions.length === 0) {
+        container.innerHTML = '<div class="no-questions-msg">尚未標記任何題目，請先回到 Step 2 設定題型。</div>';
+        return;
+    }
+
+    let html = '';
+    questions.forEach((q, i) => {
+        const key      = getQuestionKey(q);
+        const rule     = specialRules[key] || { type: 'normal', answers: [] };
+        const stdCode  = q.grids.map(gi => standardAnswer[gi] || '').join('');
+        const decoded  = q.type === 'multiple'
+            ? q.grids.map(gi => { const c = standardAnswer[gi]||''; return `${c}→${decodeAnswer(c)||'空'}` }).join(', ')
+            : '';
+        const multiVal = (rule.answers || []).join(',');
+        const hint     = getMultiAnswerHint(q);
+
+        html += `
+        <div class="special-q-row ${rule.type !== 'normal' ? 'is-'+rule.type : ''}" id="sqrow-${i}">
+            <div class="special-q-info">
+                <span class="q-num">第 ${i+1} 題</span>
+                <span class="q-type-badge type-${q.type}">${q.typeName}</span>
+                <span class="q-grids-label">格 ${q.grids.map(g=>g+1).join(',')}</span>
+                <span class="q-std-ans">標準答案：<strong>${stdCode || '（空）'}</strong>
+                    ${decoded ? `<span class="q-decoded"> (${decoded})</span>` : ''}
+                </span>
+                <span class="q-pts">${q.points} 分</span>
+            </div>
+            <div class="special-q-options" id="sqopt-${i}">
+                ${['normal','bonus','exclude','multi'].map(t => {
+                    const labels = { normal:'⚖ 一般計分', bonus:'🎁 送分', exclude:'⛔ 不計分', multi:'✦ 多個正確答案' };
+                    const isSel  = rule.type === t;
+                    return `<label class="${isSel ? 'selected-'+t : ''}" id="sqlbl-${i}-${t}">
+                        <input type="radio" name="sqtype_${i}" value="${t}" ${isSel?'checked':''}>
+                        ${labels[t]}
+                    </label>`;
+                }).join('')}
+            </div>
+            <div class="multi-answer-panel ${rule.type === 'multi' ? 'open' : ''}" id="sqmulti-${i}">
+                <label>
+                    標準答案代碼：<strong style="font-family:monospace;color:#1976d2;">${stdCode}</strong>
+                    ，輸入其他可接受的答案代碼（以逗號分隔）：
+                </label>
+                <input type="text" id="sqinput-${i}" value="${multiVal}" placeholder="${hint}">
+                <div class="multi-answer-hint">💡 ${hint}</div>
+                <div class="multi-answer-tags" id="sqtags-${i}"></div>
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+
+    // 綁定 radio change + tags 即時預覽
+    questions.forEach((q, i) => {
+        document.querySelectorAll(`input[name="sqtype_${i}"]`).forEach(radio => {
+            radio.addEventListener('change', function () {
+                const row   = document.getElementById(`sqrow-${i}`);
+                const panel = document.getElementById(`sqmulti-${i}`);
+                // 更新 label 樣式
+                ['normal','bonus','exclude','multi'].forEach(t => {
+                    const lbl = document.getElementById(`sqlbl-${i}-${t}`);
+                    if (lbl) lbl.className = (this.value === t) ? `selected-${t}` : '';
+                });
+                // 更新 row 顏色
+                row.className = `special-q-row ${this.value !== 'normal' ? 'is-'+this.value : ''}`;
+                // 顯示/隱藏多答案輸入框
+                panel.classList.toggle('open', this.value === 'multi');
+            });
+        });
+
+        // 多答案輸入時即時顯示 tags
+        const inp = document.getElementById(`sqinput-${i}`);
+        if (inp) {
+            const updateTags = () => {
+                const tags = document.getElementById(`sqtags-${i}`);
+                if (!tags) return;
+                const codes = inp.value.split(',').map(s=>s.trim()).filter(s=>s);
+                tags.innerHTML = codes.map(c => `<span class="multi-tag">${c}</span>`).join('');
             };
-            const questions = getQuestionsList();
-            if (questions.length === 0) { showError('請先設定題目！'); return; }
-            debugData = {};
-            processedData = csvData.map((student, si) => {
-                const studentAnswer = student['學生答案'] || '';
-                if (isAbsentStudent(student)) {
-                    debugData[si] = { studentAnswer, questionScores: [], totalScore: null, isAbsent: true };
-                    return { ...student, 新分數: '', 原分數: '', 分數差異: '', 缺考: true };
+            inp.addEventListener('input', updateTags);
+            updateTags(); // 初始化
+        }
+    });
+}
+
+/** 批次設定所有題目 */
+function batchSetSpecial(type) {
+    const questions = getQuestionsList();
+    questions.forEach((q, i) => {
+        // 更新 radio
+        const radio = document.querySelector(`input[name="sqtype_${i}"][value="${type}"]`);
+        if (radio) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+    const labels = { normal:'一般計分', bonus:'🎁 送分', exclude:'⛔ 不計分' };
+    showToast(`已批次設定全部題目為「${labels[type] || type}」`);
+}
+
+/** 套用特殊設定 */
+function applySpecialSettings() {
+    const questions = getQuestionsList();
+    let bonusCount = 0, excludeCount = 0, multiCount = 0;
+
+    questions.forEach((q, i) => {
+        const key      = getQuestionKey(q);
+        const selected = document.querySelector(`input[name="sqtype_${i}"]:checked`);
+        if (!selected) return;
+        const type = selected.value;
+
+        if (type === 'normal') {
+            delete specialRules[key];
+        } else if (type === 'bonus') {
+            specialRules[key] = { type: 'bonus', answers: [] };
+            bonusCount++;
+        } else if (type === 'exclude') {
+            specialRules[key] = { type: 'exclude', answers: [] };
+            excludeCount++;
+        } else if (type === 'multi') {
+            const inp     = document.getElementById(`sqinput-${i}`);
+            const rawVal  = inp ? inp.value.trim() : '';
+            const answers = rawVal ? rawVal.split(',').map(s=>s.trim()).filter(s=>s) : [];
+            if (answers.length === 0) {
+                showError(`第 ${i+1} 題：多答案模式需至少輸入一個替代答案`);
+                return;
+            }
+            specialRules[key] = { type: 'multi', answers };
+            multiCount++;
+        }
+    });
+
+    closeSpecialModal();
+    renderGridEditor();
+
+    const parts = [];
+    if (bonusCount   > 0) parts.push(`🎁 送分 ${bonusCount} 題`);
+    if (excludeCount > 0) parts.push(`⛔ 不計分 ${excludeCount} 題`);
+    if (multiCount   > 0) parts.push(`✦ 多答案 ${multiCount} 題`);
+    showToast(parts.length > 0 ? `✓ 特殊設定已套用：${parts.join('、')}` : '✓ 已清除全部特殊設定');
+}
+
+// ─────────────────────────────────────────────────────────
+// ★ 計算分數（支援三種特殊規則）
+// ─────────────────────────────────────────────────────────
+function processScores() {
+    try {
+        const scoringRules = {
+            1: parseFloat(document.getElementById('error1').value)||0,
+            2: parseFloat(document.getElementById('error2').value)||0,
+            3: parseFloat(document.getElementById('error3').value)||0,
+            4: parseFloat(document.getElementById('error4').value)||0,
+        };
+        const questions = getQuestionsList();
+        if (questions.length === 0) { showError('請先設定題目！'); return; }
+
+        debugData = {};
+        processedData = csvData.map((student, si) => {
+            const sAns = student['學生答案'] || '';
+
+            if (isAbsentStudent(student)) {
+                debugData[si] = { studentAnswer: sAns, questionScores: [], totalScore: null, isAbsent: true };
+                return { ...student, 新分數: '', 原分數: '', 分數差異: '', 缺考: true };
+            }
+
+            let totalScore = 0;
+            const questionScores = [];
+
+            questions.forEach(q => {
+                const key  = getQuestionKey(q);
+                const rule = specialRules[key] || null;
+                let score = 0, detail = '', specialType = rule ? rule.type : null;
+
+                // ─── 送分 ────────────────────────────────────
+                if (rule && rule.type === 'bonus') {
+                    score  = q.points;
+                    detail = `🎁 送分 — 全員得滿分 ${q.points} 分`;
+                    totalScore += score;
+                    questionScores.push({ ...q, score, detail, specialType });
+                    return;
                 }
-                let totalScore = 0;
-                const questionScores = [];
-                questions.forEach(q => {
-                    let score = 0, detail = '';
-                    if (q.type === 'fill') {
-                        let allCorrect = true;
-                        const answers = [];
-                        for (const gi of q.grids) {
-                            const sc = studentAnswer[gi] || '=';
-                            const cc = standardAnswer[gi] || '';
-                            answers.push(`格${gi+1}: ${sc} ${sc===cc?'✓':'✗(正確:'+cc+')'}`);
-                            if (sc !== cc) allCorrect = false;
+
+                // ─── 不計分 ──────────────────────────────────
+                if (rule && rule.type === 'exclude') {
+                    score  = 0;
+                    detail = `⛔ 不計分 — 此題不計入總分`;
+                    questionScores.push({ ...q, score, detail, specialType }); // 不加入 totalScore
+                    return;
+                }
+
+                // ─── 多答案 / 一般計分 ────────────────────────
+                const isMulti = rule && rule.type === 'multi';
+                const gi = q.grids[0];
+                const sc = sAns[gi] || '=';
+
+                if (q.type === 'fill') {
+                    const studentPattern = q.grids.map(g => sAns[g] || '').join('');
+                    const stdPattern     = q.grids.map(g => standardAnswer[g] || '').join('');
+                    if (isMulti) {
+                        const validPatterns = [stdPattern, ...(rule.answers || [])];
+                        const ok = validPatterns.some(p => p === studentPattern);
+                        score  = ok ? q.points : 0;
+                        detail = ok
+                            ? `選填多答案正確 ✓（${studentPattern} ∈ {${validPatterns.join(' / ')}}）`
+                            : `選填多答案錯誤 ✗（學生：${studentPattern}，可接受：${validPatterns.join(' / ')}）`;
+                    } else {
+                        let ok = true;
+                        const parts = [];
+                        for (const g of q.grids) {
+                            const s = sAns[g]||'=', c = standardAnswer[g]||'';
+                            parts.push(`格${g+1}:${s}${s===c?'✓':'✗('+c+')'}`);
+                            if (s !== c) ok = false;
                         }
-                        score = allCorrect ? q.points : 0;
-                        detail = allCorrect
-                            ? `選填全對 ✓ (${answers.join(', ')})`
-                            : `選填有誤 ✗ (${answers.join(', ')})`;
-                    } else if (q.type === 'multiple') {
-                        const gi = q.grids[0];
-                        const sc = studentAnswer[gi] || '=';
-                        const cc = standardAnswer[gi] || '';
+                        score  = ok ? q.points : 0;
+                        detail = ok ? `選填全對 ✓（${parts.join(', ')}）` : `選填有誤 ✗（${parts.join(', ')}）`;
+                    }
+
+                } else if (q.type === 'multiple') {
+                    const cc = standardAnswer[gi] || '';
+                    if (isMulti) {
+                        const validCodes = [cc, ...(rule.answers || [])];
+                        if (validCodes.includes(sc)) {
+                            score  = q.points;
+                            detail = `多選多答案完全正確 ✓（學生:${sc}，可接受:${validCodes.join('/')}）`;
+                        } else {
+                            // 對每個可接受答案算錯誤數，取最有利的
+                            let best = { score: 0, detail: '' };
+                            validCodes.forEach(vc => {
+                                const ec = calculateErrorCount(sc, vc);
+                                const s  = ec===0 ? q.points : (ec<5 ? scoringRules[ec]||0 : 0);
+                                if (s > best.score) {
+                                    best.score  = s;
+                                    best.detail = `多選多答案錯${ec}個（學生:${decodeAnswer(sc)||'未作答'}，最佳答:${decodeAnswer(vc)}，得${s}分）`;
+                                }
+                            });
+                            score  = best.score;
+                            detail = best.detail || `多選多答案全錯 ✗（學生:${sc}，可接受:${validCodes.join('/')}）`;
+                        }
+                    } else {
                         const ec = calculateErrorCount(sc, cc);
                         const sa = decodeAnswer(sc), ca = decodeAnswer(cc);
-                        if (ec === 0) { score = q.points; detail = `多選全對 ✓ (答:${sa}=正確:${ca})`; }
-                        else if (ec >= 5) { score = 0; detail = `多選錯誤過多 ✗ (答:${sa||'未作答'}, 正確:${ca}, 錯${ec}個)`; }
-                        else { score = scoringRules[ec] || 0; detail = `多選錯${ec}個 (答:${sa}, 正確:${ca}, 得${score}分)`; }
-                    } else {
-                        const gi = q.grids[0];
-                        const sc = studentAnswer[gi] || '=';
-                        const cc = standardAnswer[gi] || '';
-                        score = (sc === cc) ? q.points : 0;
-                        detail = (sc === cc)
-                            ? `${q.typeName}正確 ✓ (答:${sc})`
-                            : `${q.typeName}錯誤 ✗ (答:${sc||'未作答'}, 正確:${cc})`;
+                        if (ec===0)       { score = q.points;           detail = `多選全對 ✓（答:${sa}=正確:${ca}）`; }
+                        else if (ec >= 5) { score = 0;                  detail = `多選錯誤過多 ✗（答:${sa||'未作答'}，正確:${ca}，錯${ec}個）`; }
+                        else              { score = scoringRules[ec]||0; detail = `多選錯${ec}個（答:${sa}，正確:${ca}，得${score}分）`; }
                     }
-                    totalScore += score;
-                    questionScores.push({ ...q, score, detail });
-                });
-                debugData[si] = { studentAnswer, questionScores, totalScore };
-                return {
-                    ...student,
-                    新分數: totalScore.toFixed(1),
-                    原分數: student['作答成績'] || '0',
-                    分數差異: (totalScore - parseFloat(student['作答成績'] || 0)).toFixed(1),
-                    缺考: false
-                };
-            });
-            displayResults();
-            goToStep(4);
-        } catch (error) {
-            showError('計算分數失敗：' + error.message);
-        }
-    }
 
-    function displayResults() {
-        const presentData = processedData.filter(s => !s.缺考);
-        const absentCount = processedData.length - presentData.length;
-        const newScores = presentData.map(s => parseFloat(s.新分數));
-        const oldScores = presentData.map(s => parseFloat(s.原分數));
-        const avg = arr => arr.length > 0
-            ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2) : '-';
-        document.getElementById('statsGrid').innerHTML = `
-            <div class="stat-card"><h3>登記人數</h3><div class="value">${processedData.length}</div></div>
-            <div class="stat-card absent-card"><h3>缺考人數</h3><div class="value">${absentCount}</div></div>
-            <div class="stat-card"><h3>原平均分數</h3><div class="value">${avg(oldScores)}</div></div>
-            <div class="stat-card"><h3>新平均分數</h3><div class="value">${avg(newScores)}</div></div>
-            <div class="stat-card"><h3>最高分</h3><div class="value">${newScores.length > 0 ? Math.max(...newScores).toFixed(2) : '-'}</div></div>
-            <div class="stat-card"><h3>最低分</h3><div class="value">${newScores.length > 0 ? Math.min(...newScores).toFixed(2) : '-'}</div></div>
-        `;
-        let html = '<thead><tr><th>班級簡稱</th><th>座號</th><th>學號</th><th>姓名</th><th>原分數</th><th>新分數</th><th>分數差異</th></tr></thead><tbody>';
-        processedData.forEach((row, index) => {
-            html += `<tr class="clickable ${row.缺考 ? 'absent-row' : ''}" onclick="showDebugModal(${index})">`;
-            html += `<td>${row['班級簡稱']||''}</td><td>${row['座號']||''}</td><td>${row['學號']||''}</td><td>${row['姓名']||''}</td>`;
-            if (row.缺考) {
-                html += `<td style="color:#999;">缺考</td><td style="color:#999;font-weight:bold;">缺考</td><td style="color:#999;">-</td>`;
-            } else {
-                const diff = parseFloat(row['分數差異']);
-                const color = diff > 0 ? '#28a745' : (diff < 0 ? '#dc3545' : '#666');
-                html += `<td>${row['原分數']}</td>`;
-                html += `<td style="font-weight:bold;color:#667eea;">${row['新分數']}</td>`;
-                html += `<td style="color:${color};font-weight:bold;">${diff > 0 ? '+' : ''}${row['分數差異']}</td>`;
-            }
-            html += '</tr>';
+                } else {
+                    // 單選 / 混合
+                    const cc = standardAnswer[gi] || '';
+                    if (isMulti) {
+                        const validCodes = [cc, ...(rule.answers || [])];
+                        const ok = validCodes.includes(sc);
+                        score  = ok ? q.points : 0;
+                        detail = ok
+                            ? `${q.typeName}多答案正確 ✓（答:${sc}，可接受:${validCodes.join('/')}）`
+                            : `${q.typeName}多答案錯誤 ✗（答:${sc||'未作答'}，可接受:${validCodes.join('/')}）`;
+                    } else {
+                        const ok = sc === cc;
+                        score  = ok ? q.points : 0;
+                        detail = ok
+                            ? `${q.typeName}正確 ✓（答:${sc}）`
+                            : `${q.typeName}錯誤 ✗（答:${sc||'未作答'}，正確:${cc}）`;
+                    }
+                }
+
+                totalScore += score;
+                questionScores.push({ ...q, score, detail, specialType });
+            });
+
+            debugData[si] = { studentAnswer: sAns, questionScores, totalScore };
+            return {
+                ...student,
+                新分數: totalScore.toFixed(1),
+                原分數: student['作答成績'] || '0',
+                分數差異: (totalScore - parseFloat(student['作答成績']||0)).toFixed(1),
+                缺考: false
+            };
         });
-        html += '</tbody>';
-        document.getElementById('resultTable').innerHTML = html;
+
+        displayResults();
+        goToStep(4);
+    } catch (err) { showError('計算分數失敗：' + err.message); }
+}
+
+// ─────────────────────────────────────────────────────────
+// 顯示結果
+// ─────────────────────────────────────────────────────────
+function displayResults() {
+    const presentData = processedData.filter(s => !s.缺考);
+    const absentCount = processedData.length - presentData.length;
+    const newScores   = presentData.map(s => parseFloat(s.新分數));
+    const oldScores   = presentData.map(s => parseFloat(s.原分數));
+    const avg = arr => arr.length > 0 ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : '-';
+
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><h3>登記人數</h3><div class="value">${processedData.length}</div></div>
+        <div class="stat-card absent-card"><h3>缺考人數</h3><div class="value">${absentCount}</div></div>
+        <div class="stat-card"><h3>原平均分數</h3><div class="value">${avg(oldScores)}</div></div>
+        <div class="stat-card"><h3>新平均分數</h3><div class="value">${avg(newScores)}</div></div>
+        <div class="stat-card"><h3>最高分</h3><div class="value">${newScores.length>0?Math.max(...newScores).toFixed(2):'-'}</div></div>
+        <div class="stat-card"><h3>最低分</h3><div class="value">${newScores.length>0?Math.min(...newScores).toFixed(2):'-'}</div></div>
+    `;
+
+    // ★ 特殊設定摘要通知
+    const questions = getQuestionsList();
+    const bonusQs   = questions.filter(q => specialRules[getQuestionKey(q)]?.type === 'bonus');
+    const excludeQs = questions.filter(q => specialRules[getQuestionKey(q)]?.type === 'exclude');
+    const multiQs   = questions.filter(q => specialRules[getQuestionKey(q)]?.type === 'multi');
+    const noticeDiv = document.getElementById('specialNotice');
+    if (bonusQs.length || excludeQs.length || multiQs.length) {
+        let chips = '';
+// 修改後
+    if (bonusQs.length)   chips += `<span class="special-chip chip-bonus">🎁 送分：第 ${bonusQs.map(q => questions.indexOf(q)+1).join('、')} 題</span>`;
+    if (excludeQs.length) chips += `<span class="special-chip chip-exclude">⛔ 不計分：第 ${excludeQs.map(q => questions.indexOf(q)+1).join('、')} 題</span>`;
+    if (multiQs.length)   chips += `<span class="special-chip chip-multi">✦ 多答案：第 ${multiQs.map(q => questions.indexOf(q)+1).join('、')} 題</span>`; 
+        noticeDiv.style.display = 'block';
+        noticeDiv.innerHTML = `<div class="alert alert-warning">
+            <strong>⚙ 本次計分含特殊設定：</strong>
+            <div class="special-summary-bar" style="margin-top:8px;">${chips}</div>
+        </div>`;
+    } else {
+        noticeDiv.style.display = 'none';
     }
 
-    function downloadResults() {
-        try {
-            let csv = '\uFEFF';
-            const presentData = processedData.filter(s => !s.缺考);
-            const newScores = presentData.map(s => parseFloat(s.新分數));
-            const totalCount = newScores.length;
-            const totalAvg = totalCount > 0 ? newScores.reduce((a, b) => a + b, 0) / totalCount : 0;
-            const maxScore = totalCount > 0 ? Math.max(...newScores) : 0;
-            const variance = totalCount > 0
-                ? newScores.reduce((s, v) => s + Math.pow(v - totalAvg, 2), 0) / totalCount : 0;
-            const std = Math.sqrt(variance);
-            const sorted = [...newScores].sort((a, b) => b - a);
-            const pct = p => Math.round(sorted[Math.floor(totalCount * p)] || 0);
-            const first = processedData[0] || {};
-            const subjectCode = first['科目代號'] || '';
-            const subjectName = first['科目簡稱'] || '';
-            const headers = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','應考人數','班級平均','班級最高','標準差'];
-            csv += headers.join(',') + '\n';
-            csv += `"${subjectCode}","${subjectName}","","全部學生","${totalCount}","${totalCount}","${totalAvg.toFixed(2)}","${maxScore.toFixed(2)}","${std.toFixed(2)}"\n`;
-            csv += `"${subjectCode}","${subjectName}","","頂標分數","${pct(0.12)}"\n`;
-            csv += `"${subjectCode}","${subjectName}","","前標分數","${pct(0.25)}"\n`;
-            csv += `"${subjectCode}","${subjectName}","","均標分數","${pct(0.50)}"\n`;
-            csv += `"${subjectCode}","${subjectName}","","後標分數","${pct(0.75)}"\n`;
-            csv += `"${subjectCode}","${subjectName}","","底標分數","${pct(0.88)}"\n`;
-            const classMap = {};
-            presentData.forEach(row => {
-                const cls = row['班級簡稱'] || '未分類';
-                if (!classMap[cls]) classMap[cls] = { 班級代號: row['班級代號'] || '', scores: [] };
-                classMap[cls].scores.push(parseFloat(row['新分數']));
-            });
-            Object.entries(classMap).sort((a, b) => a[1].班級代號.localeCompare(b[1].班級代號))
-                .forEach(([cls, data]) => {
-                    const avg2 = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
-                    const max2 = Math.max(...data.scores);
-                    const std2 = Math.sqrt(data.scores.reduce((s, v) => s + Math.pow(v - avg2, 2), 0) / data.scores.length);
-                    csv += `"${subjectCode}","${subjectName}","${data.班級代號}","${cls}","","${data.scores.length}","${avg2.toFixed(2)}","${max2}","${std2.toFixed(2)}"\n`;
-                });
-            csv += '\n';
-            const studentHeaders = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','學號','姓名','性別','新作答成績','班級名次','全部名次','學生答案','作答情形'];
-            csv += studentHeaders.join(',') + '\n';
-            processedData.forEach(row => {
-                const vals = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','學號','姓名','性別']
-                    .map(k => row[k] || '');
-                vals.push(row['新分數'] || '', row['班級名次'] || '', row['全部名次'] || '',
-                    row['學生答案'] || '', row['作答情形'] || '');
-                csv += vals.map(v => `"${v}"`).join(',') + '\n';
-            });
-            const blob = new Blob([csv], { type: 'text/csv;charset=big5;' });
-            const link = document.createElement('a');
-            link.setAttribute('href', URL.createObjectURL(blob));
-            link.setAttribute('download', '改分後成績單_' + Date.now() + '.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (error) {
-            showError('下載失敗：' + error.message);
+    let html = '<thead><tr><th>班級簡稱</th><th>座號</th><th>學號</th><th>姓名</th><th>原分數</th><th>新分數</th><th>分數差異</th></tr></thead><tbody>';
+    processedData.forEach((row, index) => {
+        html += `<tr class="clickable ${row.缺考?'absent-row':''}" onclick="showDebugModal(${index})">`;
+        html += `<td>${row['班級簡稱']||''}</td><td>${row['座號']||''}</td><td>${row['學號']||''}</td><td>${row['姓名']||''}</td>`;
+        if (row.缺考) {
+            html += `<td style="color:#999;">缺考</td><td style="color:#999;font-weight:bold;">缺考</td><td style="color:#999;">-</td>`;
+        } else {
+            const diff = parseFloat(row['分數差異']);
+            const color = diff>0?'#28a745':(diff<0?'#dc3545':'#666');
+            html += `<td>${row['原分數']}</td>
+                     <td style="font-weight:bold;color:#667eea;">${row['新分數']}</td>
+                     <td style="color:${color};font-weight:bold;">${diff>0?'+':''}${row['分數差異']}</td>`;
         }
+        html += '</tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('resultTable').innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────
+// 除錯視窗（含特殊規則標示）
+// ─────────────────────────────────────────────────────────
+function showDebugModal(studentIndex) {
+    const student = processedData[studentIndex];
+    const debug   = debugData[studentIndex];
+    if (!debug) { showError('找不到計分資料'); return; }
+    const modal = document.getElementById('debugModal');
+    document.getElementById('debugTitle').textContent =
+        `${student['姓名']} (${student['班級簡稱']} ${student['座號']}號)`;
+
+    if (debug.isAbsent) {
+        document.getElementById('debugBody').innerHTML = `
+            <div class="alert alert-warning" style="font-size:16px;text-align:center;padding:30px;">
+                <div style="font-size:48px;margin-bottom:15px;">🚫</div>
+                <strong>此學生缺考</strong><br><br>缺考學生不計分，不計入班級與全體平均。
+            </div>`;
+        modal.classList.add('show');
+        return;
     }
+
+    let html = `
+        <div class="debug-section">
+            <h4>基本資訊</h4>
+            <p><strong>原分數：</strong>${student['原分數']} 分</p>
+            <p><strong>新分數：</strong>${student['新分數']} 分</p>
+            <p><strong>分數差異：</strong>
+                <span style="color:${parseFloat(student['分數差異'])>=0?'#28a745':'#dc3545'};">
+                    ${student['分數差異']} 分
+                </span>
+            </p>
+        </div>
+        <div class="debug-section">
+            <h4>答案對照（藍=正確、紅=錯誤、灰=不計分）</h4>
+            <div class="debug-grid">`;
+
+    // 找出被排除的格子
+    const excludedGrids = new Set();
+    debug.questionScores.forEach(qs => {
+        if (qs.specialType === 'exclude') qs.grids.forEach(g => excludedGrids.add(g));
+    });
+
+    const maxLen = Math.max(debug.studentAnswer.length, standardAnswer.length);
+    for (let i = 0; i < maxLen; i++) {
+        const sc = debug.studentAnswer[i] || '';
+        const cc = standardAnswer[i] || '';
+        if (cc === '=') continue;
+        const cls = excludedGrids.has(i) ? 'excluded' : (sc===cc ? 'correct' : 'wrong');
+        html += `<div class="debug-cell ${cls}">
+            <div class="cell-number">${i+1}</div>
+            <div class="cell-answer">${sc||'?'}</div>
+            <div class="cell-answer" style="color:#888;">(${cc||'?'})</div>
+        </div>`;
+    }
+    html += `</div></div><div class="debug-section"><h4>各題得分明細</h4>`;
+
+    debug.questionScores.forEach((qs, i) => {
+        const detailClass = {
+            bonus:   'q-bonus',
+            exclude: 'q-exclude',
+            multi:   'q-multi',
+        }[qs.specialType] || '';
+
+        html += `<div class="question-detail ${detailClass}">
+            <strong>第 ${i+1} 題 (${qs.typeName})：</strong>格號 ${qs.grids.map(g=>g+1).join(',')}
+            ${qs.specialType ? `<span class="special-chip chip-${qs.specialType}" style="font-size:11px;vertical-align:middle;margin-left:5px;">${{bonus:'🎁送分',exclude:'⛔不計分',multi:'✦多答案'}[qs.specialType]}</span>` : ''}
+            <br>${qs.detail}<br>
+            <strong>得分：${qs.score} / ${qs.specialType==='exclude'?'(不計)':qs.points}</strong>
+        </div>`;
+    });
+
+    const earned = debug.questionScores.reduce((s,q) => s+q.score, 0);
+    html += `</div>
+        <div class="debug-section">
+            <h4>總分</h4>
+            <p style="font-size:28px;font-weight:bold;color:#667eea;">${earned.toFixed(1)} 分</p>
+        </div>`;
+
+    document.getElementById('debugBody').innerHTML = html;
+    modal.classList.add('show');
+}
+
+// ─────────────────────────────────────────────────────────
+// 下載 CSV
+// ─────────────────────────────────────────────────────────
+function downloadResults() {
+    try {
+        let csv = '\uFEFF';
+        const presentData = processedData.filter(s => !s.缺考);
+        const newScores = presentData.map(s => parseFloat(s.新分數));
+        const n = newScores.length;
+        const totalAvg = n>0 ? newScores.reduce((a,b)=>a+b,0)/n : 0;
+        const maxScore = n>0 ? Math.max(...newScores) : 0;
+        const variance = n>0 ? newScores.reduce((s,v)=>s+Math.pow(v-totalAvg,2),0)/n : 0;
+        const std = Math.sqrt(variance);
+        const sorted = [...newScores].sort((a,b)=>b-a);
+        const pct = p => Math.round(sorted[Math.floor(n*p)]||0);
+
+        const first = processedData[0]||{};
+        const subCode = first['科目代號']||'';
+        const subName = first['科目簡稱']||'';
+
+        const headers = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','應考人數','班級平均','班級最高','標準差'];
+        csv += headers.join(',') + '\n';
+        csv += `"${subCode}","${subName}","","全部學生","${n}","${n}","${totalAvg.toFixed(2)}","${maxScore.toFixed(2)}","${std.toFixed(2)}"\n`;
+        csv += `"${subCode}","${subName}","","頂標","${pct(0.12)}"\n`;
+        csv += `"${subCode}","${subName}","","前標","${pct(0.25)}"\n`;
+        csv += `"${subCode}","${subName}","","均標","${pct(0.50)}"\n`;
+        csv += `"${subCode}","${subName}","","後標","${pct(0.75)}"\n`;
+        csv += `"${subCode}","${subName}","","底標","${pct(0.88)}"\n`;
+
+        const classMap = {};
+        presentData.forEach(row => {
+            const cls = row['班級簡稱']||'未分類';
+            if (!classMap[cls]) classMap[cls] = { 班級代號: row['班級代號']||'', scores: [] };
+            classMap[cls].scores.push(parseFloat(row['新分數']));
+        });
+        Object.entries(classMap).sort((a,b)=>a[1].班級代號.localeCompare(b[1].班級代號)).forEach(([cls,data]) => {
+            const avg2 = data.scores.reduce((a,b)=>a+b,0)/data.scores.length;
+            const max2 = Math.max(...data.scores);
+            const std2 = Math.sqrt(data.scores.reduce((s,v)=>s+Math.pow(v-avg2,2),0)/data.scores.length);
+            csv += `"${subCode}","${subName}","${data.班級代號}","${cls}","","${data.scores.length}","${avg2.toFixed(2)}","${max2}","${std2.toFixed(2)}"\n`;
+        });
+        csv += '\n';
+
+        const sHeaders = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','學號','姓名','性別','新作答成績','班級名次','全部名次','學生答案','作答情形'];
+        csv += sHeaders.join(',') + '\n';
+        processedData.forEach(row => {
+            const vals = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','學號','姓名','性別'].map(k=>row[k]||'');
+            vals.push(row['新分數']||'', row['班級名次']||'', row['全部名次']||'', row['學生答案']||'', row['作答情形']||'');
+            csv += vals.map(v=>`"${v}"`).join(',') + '\n';
+        });
+
+        const blob = new Blob([csv], { type:'text/csv;charset=big5;' });
+        const link = document.createElement('a');
+        link.setAttribute('href', URL.createObjectURL(blob));
+        link.setAttribute('download', '改分後成績單_'+Date.now()+'.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (err) { showError('下載失敗：' + err.message); }
+}
 </script>
 </body>
 </html>

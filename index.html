@@ -49,20 +49,20 @@
             color: #007bff;
         }
 
-        /* --- 主標題區 (縮小版) --- */
+        /* --- 主標題區 --- */
         .hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-align: center;
-            padding:50px 20px; /* <-- 已修改 */
+            padding: 50px 20px;
         }
         .hero h1 {
-            font-size: 2.4em; /* <-- 已修改 */
+            font-size: 2.4em;
             margin-bottom: 20px;
             font-weight: 600;
         }
         .hero p {
-            font-size: 1.0em; /* <-- 已修改 */
+            font-size: 1.0em;
             max-width: 600px;
             margin: 0 auto;
         }
@@ -89,6 +89,8 @@
             padding: 30px;
             text-align: left;
             transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
         }
         .tool-card:hover {
             transform: translateY(-10px);
@@ -101,11 +103,12 @@
         }
         .tool-card p {
             font-size: 1em;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             color: #555;
         }
         .tool-card .modes {
-            margin-top: 15px;
+            margin-top: 5px;
+            margin-bottom: 10px;
             padding-left: 20px;
         }
         .tool-card .modes span {
@@ -119,6 +122,52 @@
             color: #28a745;
             margin-right: 10px;
         }
+
+        /* --- 特殊計分功能標籤區塊 --- */
+        .special-features {
+            margin-top: 12px;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            background-color: #f8f4ff;
+            border-left: 4px solid #764ba2;
+            border-radius: 6px;
+        }
+        .special-features .sf-title {
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #764ba2;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .special-features .sf-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+        .sf-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.82em;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .sf-chip.chip-multi {
+            background-color: #e8d5ff;
+            color: #5a2d91;
+        }
+        .sf-chip.chip-bonus {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .sf-chip.chip-exclude {
+            background-color: #fde8e8;
+            color: #7b1f1f;
+        }
+
         .tool-card a.button {
             display: inline-block;
             background-color: #007bff;
@@ -128,10 +177,13 @@
             text-decoration: none;
             font-weight: bold;
             transition: background-color 0.3s;
+            margin-top: auto;
+            align-self: flex-start;
         }
         .tool-card a.button:hover {
             background-color: #0056b3;
         }
+
         /* --- 頁腳 --- */
         .footer {
             background-color: #2c3e50;
@@ -164,6 +216,7 @@
         <div class="container">
             <h2>核心功能</h2>
             <div class="tools-grid">
+
                 <div class="tool-card">
                     <h3>倒扣 n 值計算器</h3>
                     <p>根據測驗題數與選項數，快速計算多選題或倒扣題型的級距分數 (n值)，確保評分標準的公平與精確性。</p>
@@ -173,6 +226,14 @@
                 <div class="tool-card">
                     <h3>電腦閱卷改分系統</h3>
                     <p>提供一個安全且直覺的介面，用於修正因讀卡錯誤、答案異動或特殊情況需要調整的學生分數。</p>
+                    <div class="special-features">
+                        <div class="sf-title">⚙️ 支援特殊計分設定</div>
+                        <div class="sf-chips">
+                            <span class="sf-chip chip-multi">✦ 多答案題</span>
+                            <span class="sf-chip chip-bonus">🎁 送分題</span>
+                            <span class="sf-chip chip-exclude">⛔ 不計分題</span>
+                        </div>
+                    </div>
                     <a href="change_score.html" class="button">進入系統</a>
                 </div>
 
@@ -185,6 +246,7 @@
                     </div>
                     <a href="score_processing.html" class="button">開始處理</a>
                 </div>
+
             </div>
         </div>
     </main>
