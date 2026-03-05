@@ -155,17 +155,64 @@
             padding: 3px 10px;
             border-radius: 20px;
         }
-        .sf-chip.chip-multi {
-            background-color: #e8d5ff;
-            color: #5a2d91;
+        .sf-chip.chip-multi   { background-color: #e8d5ff; color: #5a2d91; }
+        .sf-chip.chip-bonus   { background-color: #d4edda; color: #155724; }
+        .sf-chip.chip-exclude { background-color: #fde8e8; color: #7b1f1f; }
+
+        /* --- 列印報告功能標籤區塊 --- */
+        .report-features {
+            margin-top: 12px;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            background-color: #f0f8ff;
+            border-left: 4px solid #0077cc;
+            border-radius: 6px;
         }
-        .sf-chip.chip-bonus {
-            background-color: #d4edda;
-            color: #155724;
+        .report-features .rf-title {
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #0077cc;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        .sf-chip.chip-exclude {
-            background-color: #fde8e8;
-            color: #7b1f1f;
+        .report-features .rf-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+        .rf-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.82em;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .rf-chip.chip-scoresheet { background-color: #d0eaff; color: #004a8f; }
+        .rf-chip.chip-analysis   { background-color: #d4f0e8; color: #0d5c3a; }
+        .rf-chip.chip-chart      { background-color: #fff3cd; color: #856404; }
+        .rf-chip.chip-print      { background-color: #fde8e8; color: #7b1f1f; }
+
+        /* --- NEW 閃爍標籤 --- */
+        .badge-new {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b, #ee0979);
+            color: #fff;
+            font-size: 0.65em;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            vertical-align: middle;
+            margin-left: 4px;
+            letter-spacing: 0.5px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.65; }
         }
 
         .tool-card a.button {
@@ -217,12 +264,14 @@
             <h2>核心功能</h2>
             <div class="tools-grid">
 
+                <!-- 卡片 1 -->
                 <div class="tool-card">
                     <h3>倒扣 n 值計算器</h3>
                     <p>根據測驗題數與選項數，快速計算多選題或倒扣題型的級距分數 (n值)，確保評分標準的公平與精確性。</p>
                     <a href="n_calculator.html" class="button">前往計算</a>
                 </div>
 
+                <!-- 卡片 2 -->
                 <div class="tool-card">
                     <h3>電腦閱卷改分系統</h3>
                     <p>提供一個安全且直覺的介面，用於修正因讀卡錯誤、答案異動或特殊情況需要調整的學生分數。</p>
@@ -237,12 +286,22 @@
                     <a href="change_score.html" class="button">進入系統</a>
                 </div>
 
+                <!-- 卡片 3 -->
                 <div class="tool-card">
                     <h3>成績資料處理系統</h3>
                     <p>自動化處理閱卷後的成績資料，支援不同需求的資料比對與檔案分流，大幅提升行政效率。</p>
                     <div class="modes">
                         <span>跑班比對模式</span>
                         <span>班級分檔模式</span>
+                    </div>
+                    <div class="report-features">
+                        <div class="rf-title">🖨️ 列印輸出內容 <span class="badge-new">NEW</span></div>
+                        <div class="rf-chips">
+                            <span class="rf-chip chip-scoresheet">📄 各班成績單</span>
+                            <span class="rf-chip chip-analysis">📊 班級分析報告</span>
+                            <span class="rf-chip chip-chart">📈 得分分布圖表</span>
+                            <span class="rf-chip chip-print">🖨️ 一鍵列印</span>
+                        </div>
                     </div>
                     <a href="score_processing.html" class="button">開始處理</a>
                 </div>

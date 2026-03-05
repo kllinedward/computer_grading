@@ -1,626 +1,889 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>成績資料處理系統</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Microsoft JhengHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 30px;
-        }
-        h1 {
-            color: #667eea;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2em;
-        }
-        .section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        .section h2 {
-            color: #764ba2;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-        }
-        .file-input-wrapper input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-        .file-input-label {
-            display: block;
-            padding: 15px 25px;
-            background: #667eea;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            transition: background 0.3s;
-        }
-        .file-input-label:hover {
-            background: #764ba2;
-        }
-        .file-name {
-            margin-top: 10px;
-            color: #666;
-            font-size: 0.9em;
-        }
-        .encoding-selector {
-            margin-top: 10px;
-        }
-        .encoding-selector label {
-            display: inline-block;
-            margin-right: 15px;
-            color: #555;
-        }
-        .encoding-selector input[type="radio"] {
-            margin-right: 5px;
-        }
-        .mode-selector {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .mode-card {
-            flex: 1;
-            padding: 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-        .mode-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-        }
-        .mode-card.active {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-        .mode-card h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-        }
-        .mode-card p {
-            color: #666;
-            font-size: 0.9em;
-            line-height: 1.5;
-        }
-        .mode-card .icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        button {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.1em;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s;
-            width: 100%;
-            margin-top: 15px;
-        }
-        button:hover {
-            background: #218838;
-        }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .status {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            display: none;
-        }
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        .result-info {
-            margin-top: 20px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-        .result-info h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        .result-info ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        .result-info li {
-            padding: 5px 0;
-            color: #555;
-        }
-        .download-section {
-            margin-top: 20px;
-            display: none;
-        }
-        .download-btn {
-            background: #17a2b8;
-            margin-top: 10px;
-            padding: 12px 20px;
-            font-size: 1em;
-        }
-        .download-btn:hover {
-            background: #138496;
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成績資料處理系統</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Microsoft JhengHei',Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;padding:20px;}
+.container{max-width:1100px;margin:0 auto;background:white;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,.2);padding:30px;}
+h1{color:#667eea;text-align:center;margin-bottom:30px;font-size:2em;}
+.section{margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px;}
+.section h2{color:#764ba2;margin-bottom:15px;font-size:1.3em;}
+.file-input-wrapper{position:relative;overflow:hidden;display:inline-block;width:100%;}
+.file-input-wrapper input[type=file]{font-size:100px;position:absolute;left:0;top:0;opacity:0;cursor:pointer;}
+.file-input-label{display:block;padding:15px 25px;background:#667eea;color:white;border-radius:8px;cursor:pointer;text-align:center;transition:background .3s;}
+.file-input-label:hover{background:#764ba2;}
+.file-name{margin-top:10px;color:#666;font-size:.9em;}
+.encoding-selector{margin-top:10px;}
+.encoding-selector label{display:inline-block;margin-right:15px;color:#555;}
+.mode-selector{display:flex;gap:15px;margin-bottom:20px;}
+.mode-card{flex:1;padding:20px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;transition:all .3s;text-align:center;}
+.mode-card:hover{border-color:#667eea;transform:translateY(-2px);}
+.mode-card.active{border-color:#667eea;background:#f0f4ff;}
+.mode-card h3{color:#667eea;margin-bottom:10px;}
+.mode-card p{color:#666;font-size:.9em;line-height:1.5;}
+.mode-card .icon{font-size:2em;margin-bottom:10px;}
+button{background:#28a745;color:white;border:none;padding:15px 30px;font-size:1.1em;border-radius:8px;cursor:pointer;transition:all .3s;width:100%;margin-top:15px;}
+button:hover{background:#218838;}
+button:disabled{background:#ccc;cursor:not-allowed;}
+.status{margin-top:15px;padding:15px;border-radius:8px;display:none;}
+.status.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}
+.status.error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;}
+.status.info{background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb;}
+.download-section{margin-top:20px;display:none;}
+.download-btn{background:#17a2b8;margin-top:10px;padding:12px 20px;font-size:1em;}
+.download-btn:hover{background:#138496;}
+.hidden{display:none;}
+.sdiv{border:none;border-top:2px dashed #e0e0e0;margin:14px 0;}
+.result-info{margin-top:16px;padding:15px;background:white;border-radius:8px;border-left:4px solid #667eea;}
+.result-info h3{color:#667eea;margin-bottom:10px;}
+.result-info ul{list-style:none;padding:0;}
+.result-info li{padding:4px 0;color:#555;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 成績資料處理系統</h1>
-        
-        <div class="section">
-            <h2>選擇處理模式</h2>
-            <div class="mode-selector">
-                <div class="mode-card active" id="modeNameList" onclick="selectMode('nameList')">
-                    <div class="icon">🔄</div>
-                    <h3>跑班比對模式</h3>
-                    <p>依據跑班名單Excel檔案篩選學生，其他學生按班級分類</p>
-                </div>
-                <div class="mode-card" id="modeClassOnly" onclick="selectMode('classOnly')">
-                    <div class="icon">🏫</div>
-                    <h3>班級分檔模式</h3>
-                    <p>將CSV檔案中的所有學生依班級分成不同檔案</p>
-                </div>
-            </div>
-        </div>
+<div class="container">
+<h1>📊 成績資料處理系統</h1>
 
-        <div class="section" id="nameListSection">
-            <h2>1️⃣ 上傳跑班名單檔案 (Excel)</h2>
-            <div class="file-input-wrapper">
-                <label class="file-input-label" for="nameListFile">
-                    選擇跑班名單檔案 (.xlsx)
-                </label>
-                <input type="file" id="nameListFile" accept=".xlsx">
-            </div>
-            <div class="file-name" id="nameListFileName">尚未選擇檔案</div>
-        </div>
-
-        <div class="section">
-            <h2 id="csvSectionTitle">2️⃣ 上傳成績CSV檔案</h2>
-            <div class="file-input-wrapper">
-                <label class="file-input-label" for="csvFile">
-                    選擇CSV檔案
-                </label>
-                <input type="file" id="csvFile" accept=".csv">
-            </div>
-            <div class="file-name" id="csvFileName">尚未選擇檔案</div>
-            <div class="encoding-selector">
-                <label><input type="radio" name="encoding" value="UTF-8" checked> UTF-8</label>
-                <label><input type="radio" name="encoding" value="BIG5"> BIG5 (繁體中文)</label>
-            </div>
-        </div>
-
-        <button id="processBtn" disabled>開始處理資料</button>
-
-        <div class="status" id="status"></div>
-
-        <div class="download-section" id="downloadSection">
-            <div class="result-info" id="resultInfo"></div>
-        </div>
+<div class="section">
+  <h2>選擇處理模式</h2>
+  <div class="mode-selector">
+    <div class="mode-card active" id="modeNameList" onclick="selectMode('nameList')">
+      <div class="icon">🔄</div><h3>跑班比對模式</h3>
+      <p>依跑班名單篩選跑班學生，其他按原班分類</p>
     </div>
+    <div class="mode-card" id="modeClassOnly" onclick="selectMode('classOnly')">
+      <div class="icon">🏫</div><h3>班級分檔模式</h3>
+      <p>將所有學生依班級分成不同檔案</p>
+    </div>
+  </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script>
-        let nameListData = null;
-        let csvData = null;
-        let csvFile_stored = null;
-        let currentMode = 'nameList'; // 'nameList' 或 'classOnly'
+<div class="section" id="nameListSection">
+  <h2>1️⃣ 上傳跑班名單 (Excel)</h2>
+  <div class="file-input-wrapper">
+    <label class="file-input-label" for="nameListFile">選擇跑班名單 (.xlsx)</label>
+    <input type="file" id="nameListFile" accept=".xlsx">
+  </div>
+  <div class="file-name" id="nameListFileName">尚未選擇檔案</div>
+</div>
 
-        const nameListFile = document.getElementById('nameListFile');
-        const csvFile = document.getElementById('csvFile');
-        const processBtn = document.getElementById('processBtn');
-        const status = document.getElementById('status');
-        const downloadSection = document.getElementById('downloadSection');
-        const nameListSection = document.getElementById('nameListSection');
-        const csvSectionTitle = document.getElementById('csvSectionTitle');
+<div class="section">
+  <h2 id="csvSectionTitle">2️⃣ 上傳成績 CSV 檔案</h2>
+  <div class="file-input-wrapper">
+    <label class="file-input-label" for="csvFile">選擇 CSV 檔案</label>
+    <input type="file" id="csvFile" accept=".csv">
+  </div>
+  <div class="file-name" id="csvFileName">尚未選擇檔案</div>
+  <div class="encoding-selector">
+    <label><input type="radio" name="encoding" value="UTF-8" checked> UTF-8</label>
+    <label><input type="radio" name="encoding" value="BIG5"> BIG5 (繁體中文)</label>
+  </div>
+</div>
 
-        function selectMode(mode) {
-            currentMode = mode;
-            
-            // 更新UI
-            document.getElementById('modeNameList').classList.remove('active');
-            document.getElementById('modeClassOnly').classList.remove('active');
-            document.getElementById('mode' + (mode === 'nameList' ? 'NameList' : 'ClassOnly')).classList.add('active');
-            
-            // 顯示/隱藏名單上傳區
-            if (mode === 'classOnly') {
-                nameListSection.classList.add('hidden');
-                csvSectionTitle.textContent = '1️⃣ 上傳成績CSV檔案';
-                nameListData = null; // 清除名單資料
-            } else {
-                nameListSection.classList.remove('hidden');
-                csvSectionTitle.textContent = '2️⃣ 上傳成績CSV檔案';
-            }
-            
-            // 重置狀態
-            downloadSection.style.display = 'none';
-            checkReadyToProcess();
-        }
+<button id="processBtn" disabled>開始處理資料</button>
+<div class="status" id="status"></div>
+<div class="download-section" id="downloadSection"></div>
+</div>
 
-        nameListFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('nameListFileName').textContent = `已選擇: ${file.name}`;
-                readExcelFile(file);
-            }
-        });
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const GRADE_ORDER=['一','二','三','四','五','六','七','八','九','十'];
+const CLASS_ORDER=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const BOX_COLORS=['#E53935','#1565C0','#2E7D32','#F57F17','#6A1B9A',
+                  '#00838F','#AD1457','#4E342E','#1B5E20','#0D47A1'];
+const ZONE_LABELS=['頂標以上','前~頂標','均~前標','後~均標','底~後標','底標以下'];
+const ZONE_COLORS=['#1A237E','#1565C0','#0288D1','#F57C00','#E64A19','#B71C1C'];
+const FS_NAMES  =['頂標','前標','均標','後標','底標'];
+const FS_PCTS   =[88,75,50,25,12];
+const FS_LINE_CLR=['#0D47A1','#1976D2','#0097A7','#E65100','#C62828'];
 
-        csvFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                csvFile_stored = file;
-                document.getElementById('csvFileName').textContent = `已選擇: ${file.name}`;
-                readCSVFileWithEncoding(file);
-            }
-        });
+let nameListData=null, csvData=null, csvFile_stored=null, currentMode='nameList';
+let g_printData=null, g_dbCol=null, g_dbFiveStd=null, g_dbAllStats=null;
 
-        document.querySelectorAll('input[name="encoding"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (csvFile_stored) {
-                    readCSVFileWithEncoding(csvFile_stored);
-                }
-            });
-        });
+const nameListFile  =document.getElementById('nameListFile');
+const csvFileInput  =document.getElementById('csvFile');
+const processBtn    =document.getElementById('processBtn');
+const statusEl      =document.getElementById('status');
+const downloadSection=document.getElementById('downloadSection');
 
-        function readExcelFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                    nameListData = jsonData;
-                    console.log('跑班名單資料:', nameListData);
-                    checkReadyToProcess();
-                    showStatus('✅ 跑班名單檔案讀取成功！共 ' + jsonData.length + ' 筆資料', 'success');
-                } catch (error) {
-                    showStatus('❌ 跑班名單檔案讀取失敗: ' + error.message, 'error');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
+function selectMode(mode){
+  currentMode=mode;
+  document.getElementById('modeNameList').classList.toggle('active',mode==='nameList');
+  document.getElementById('modeClassOnly').classList.toggle('active',mode==='classOnly');
+  document.getElementById('nameListSection').classList.toggle('hidden',mode==='classOnly');
+  document.getElementById('csvSectionTitle').textContent=
+    mode==='classOnly'?'1️⃣ 上傳成績 CSV 檔案':'2️⃣ 上傳成績 CSV 檔案';
+  if(mode==='classOnly') nameListData=null;
+  g_printData=null; downloadSection.style.display='none';
+  checkReady();
+}
 
-        function readCSVFileWithEncoding(file) {
-            const selectedEncoding = document.querySelector('input[name="encoding"]:checked').value;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let text;
-                    
-                    if (selectedEncoding === 'BIG5') {
-                        const bytes = new Uint8Array(e.target.result);
-                        const decoder = new TextDecoder('big5');
-                        text = decoder.decode(bytes);
-                    } else {
-                        text = e.target.result;
-                    }
-                    
-                    Papa.parse(text, {
-                        skipEmptyLines: false,
-                        complete: function(results) {
-                            csvData = results.data;
-                            console.log('CSV資料行數:', csvData.length);
-                            console.log('前3行:', csvData.slice(0, 3));
-                            checkReadyToProcess();
-                            showStatus(`✅ CSV檔案讀取成功（${selectedEncoding}編碼）！共 ${csvData.length} 行`, 'success');
-                        },
-                        error: function(error) {
-                            showStatus('❌ CSV解析失敗: ' + error.message, 'error');
-                        }
-                    });
-                } catch (error) {
-                    showStatus('❌ CSV讀取失敗: ' + error.message + '\n請嘗試切換編碼選項', 'error');
-                }
-            };
-            
-            if (selectedEncoding === 'BIG5') {
-                reader.readAsArrayBuffer(file);
-            } else {
-                reader.readAsText(file, 'UTF-8');
-            }
-        }
+nameListFile.addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  document.getElementById('nameListFileName').textContent='已選擇: '+f.name;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+      nameListData=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      checkReady(); showStatus('✅ 跑班名單讀取成功！共 '+nameListData.length+' 筆','success');
+    }catch(err){showStatus('❌ 讀取失敗: '+err.message,'error');}
+  };
+  r.readAsArrayBuffer(f);
+});
 
-        function checkReadyToProcess() {
-            if (currentMode === 'classOnly') {
-                // 班級分檔模式只需要CSV
-                processBtn.disabled = !csvData;
-            } else {
-                // 跑班比對模式需要兩個檔案
-                processBtn.disabled = !(nameListData && csvData);
-            }
-        }
+csvFileInput.addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  csvFile_stored=f;
+  document.getElementById('csvFileName').textContent='已選擇: '+f.name;
+  readCSV(f);
+});
+document.querySelectorAll('input[name="encoding"]').forEach(r=>
+  r.addEventListener('change',()=>{ if(csvFile_stored) readCSV(csvFile_stored); })
+);
 
-        processBtn.addEventListener('click', processData);
+function readCSV(file){
+  const enc=document.querySelector('input[name="encoding"]:checked').value;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const text=enc==='BIG5'
+        ?new TextDecoder('big5').decode(new Uint8Array(ev.target.result))
+        :ev.target.result;
+      Papa.parse(text,{skipEmptyLines:false,complete:res=>{
+        csvData=res.data; checkReady();
+        showStatus(`✅ CSV 讀取成功（${enc}）！共 ${csvData.length} 行`,'success');
+      }});
+    }catch(err){showStatus('❌ 讀取失敗: '+err.message,'error');}
+  };
+  enc==='BIG5'?r.readAsArrayBuffer(file):r.readAsText(file,'UTF-8');
+}
+function checkReady(){
+  processBtn.disabled=currentMode==='classOnly'?!csvData:!(nameListData&&csvData);
+}
 
-        function processData() {
-            if (currentMode === 'classOnly') {
-                processClassOnlyMode();
-            } else {
-                processNameListMode();
-            }
-        }
+function classKey(n){
+  let g=999,c=999;
+  GRADE_ORDER.forEach((ch,i)=>{ if(n.includes(ch)) g=i; });
+  CLASS_ORDER.forEach((ch,i)=>{ if(n.includes(ch)) c=i; });
+  return g*1000+c;
+}
+function sortCls(arr){
+  return arr.slice().sort((a,b)=>{ const d=classKey(a)-classKey(b); return d||a.localeCompare(b,'zh-TW'); });
+}
 
-        function processClassOnlyMode() {
-            showStatus('⏳ 正在按班級分檔...', 'info');
-            
-            try {
-                // 找出學生資料表頭
-                let studentDataStartIndex = -1;
-                
-                for (let i = 0; i < csvData.length; i++) {
-                    const row = csvData[i];
-                    if (row && row.length >= 7) {
-                        const hasSubject = row[0] && (row[0].includes('科目') || row[0].includes('代號'));
-                        const hasSeat = row[4] && row[4].includes('座號');
-                        const hasName = row[6] && row[6].includes('姓名');
-                        
-                        if (hasSubject && hasSeat && hasName) {
-                            studentDataStartIndex = i;
-                            console.log('✓ 找到學生資料表頭於第', i + 1, '行:', row);
-                            break;
-                        }
-                    }
-                }
+function findHeaderRow(){
+  for(let i=0;i<csvData.length;i++){
+    const r=csvData[i];
+    if(r&&r.length>=7)
+      if((r[0]&&(r[0].includes('科目')||r[0].includes('代號')))&&
+         (r[4]&&r[4].includes('座號'))&&
+         (r[6]&&r[6].includes('姓名'))) return i;
+  }
+  return -1;
+}
 
-                if (studentDataStartIndex === -1) {
-                    throw new Error('找不到學生資料表頭。請檢查CSV檔案格式或嘗試更換編碼');
-                }
+processBtn.addEventListener('click',()=>
+  currentMode==='classOnly'?processClassOnly():processNameList()
+);
 
-                const headers = csvData[studentDataStartIndex];
-                const classIndex = 3;
-                const nameIndex = 6;
-                
-                // 依班級分類所有學生
-                const classesByName = {};
-                
-                for (let i = studentDataStartIndex + 1; i < csvData.length; i++) {
-                    const row = csvData[i];
-                    if (row && row.length > nameIndex && row[nameIndex] && row[nameIndex].trim() !== '') {
-                        const className = row[classIndex] || '未知班級';
-                        
-                        if (!classesByName[className]) {
-                            classesByName[className] = [headers];
-                        }
-                        classesByName[className].push(row);
-                    }
-                }
+function processClassOnly(){
+  showStatus('⏳ 正在按班級分檔...','info');
+  try{
+    const hi=findHeaderRow();
+    if(hi<0) throw new Error('找不到表頭');
+    const hdrs=csvData[hi], map={};
+    for(let i=hi+1;i<csvData.length;i++){
+      const r=csvData[i];
+      if(r&&r.length>6&&r[6]&&r[6].trim()){
+        const cn=r[3]||'未知班級';
+        if(!map[cn]) map[cn]=[hdrs];
+        map[cn].push(r);
+      }
+    }
+    if(!Object.keys(map).length) throw new Error('沒有班級資料');
+    const sorted=sortCls(Object.keys(map));
+    g_printData={headers:hdrs, groups:sorted.map(cn=>({title:cn,rows:map[cn].slice(1)}))};
+    buildDownloadSection(map,null,null);
+    showStatus(`✅ 完成！共 ${sorted.length} 個班級`,'success');
+  }catch(e){showStatus('❌ '+e.message,'error');}
+}
 
-                const classCount = Object.keys(classesByName).length;
-                console.log('✓ 共找到', classCount, '個班級');
+function processNameList(){
+  showStatus('⏳ 正在比對跑班資料...','info');
+  try{
+    const hi=findHeaderRow();
+    if(hi<0) throw new Error('找不到表頭');
+    const hdrs=csvData[hi];
+    const nameSet=new Set(nameListData.map(x=>x['姓名']?x['姓名'].trim():'').filter(Boolean));
+    const matched=[hdrs], remain={};
+    for(let i=hi+1;i<csvData.length;i++){
+      const r=csvData[i];
+      if(r&&r.length>6&&r[6]&&r[6].trim()){
+        const nm=r[6].trim(), cn=r[3]||'未知班級';
+        if(nameSet.has(nm)) matched.push(r);
+        else{ if(!remain[cn]) remain[cn]=[hdrs]; remain[cn].push(r); }
+      }
+    }
+    if(matched.length<2) throw new Error('找不到符合跑班名單的學生');
+    const sorted=sortCls(Object.keys(remain));
+    g_printData={
+      headers:hdrs,
+      groups:[
+        {title:'跑班學生',rows:matched.slice(1)},
+        ...sorted.map(cn=>({title:cn,rows:remain[cn].slice(1)}))
+      ]
+    };
+    buildDownloadSection(null,matched,remain);
+    showStatus(`✅ 完成！找到 ${matched.length-1} 位跑班學生`,'success');
+  }catch(e){showStatus('❌ '+e.message,'error');}
+}
 
-                if (classCount === 0) {
-                    throw new Error('沒有找到任何班級資料');
-                }
+function buildDownloadSection(byClass,matched,remain){
+  downloadSection.style.display='block';
+  downloadSection.innerHTML='';
 
-                // 生成下載檔案
-                generateClassFiles(classesByName);
-                
-                showStatus(`✅ 處理完成！共分成 ${classCount} 個班級`, 'success');
-            } catch (error) {
-                console.error('❌ 錯誤:', error);
-                showStatus('❌ 處理失敗: ' + error.message, 'error');
-            }
-        }
+  const paBtn=document.createElement('button');
+  paBtn.style.cssText='background:linear-gradient(135deg,#1565C0,#0D47A1);color:white;'+
+    'font-size:1.06em;font-weight:bold;padding:15px 30px;border-radius:10px;'+
+    'box-shadow:0 4px 14px rgba(21,101,192,.38);margin-top:0;';
+  paBtn.innerHTML='📊 列印各班成績分析報告（A4直式）';
+  paBtn.onclick=printAllClassReports;
+  downloadSection.appendChild(paBtn);
 
-        function processNameListMode() {
-            showStatus('⏳ 正在處理跑班資料...', 'info');
-            
-            try {
-                let studentDataStartIndex = -1;
-                
-                for (let i = 0; i < csvData.length; i++) {
-                    const row = csvData[i];
-                    if (row && row.length >= 7) {
-                        const hasSubject = row[0] && (row[0].includes('科目') || row[0].includes('代號'));
-                        const hasSeat = row[4] && row[4].includes('座號');
-                        const hasName = row[6] && row[6].includes('姓名');
-                        
-                        if (hasSubject && hasSeat && hasName) {
-                            studentDataStartIndex = i;
-                            console.log('✓ 找到學生資料表頭於第', i + 1, '行:', row);
-                            break;
-                        }
-                    }
-                }
+  const hr=document.createElement('hr'); hr.className='sdiv';
+  downloadSection.appendChild(hr);
 
-                if (studentDataStartIndex === -1) {
-                    throw new Error('找不到學生資料表頭。請檢查CSV檔案格式或嘗試更換編碼');
-                }
+  const pBtn=document.createElement('button');
+  pBtn.style.cssText='background:#E65100;font-size:1.05em;padding:14px 30px;border-radius:10px;';
+  pBtn.innerHTML='🖨️ 列印各班成績單（B4 橫向）';
+  pBtn.onclick=printAllClasses;
+  downloadSection.appendChild(pBtn);
 
-                const headers = csvData[studentDataStartIndex];
-                const classIndex = 3;
-                const nameIndex = 6;
-                
-                const studentRows = [];
-                
-                for (let i = studentDataStartIndex + 1; i < csvData.length; i++) {
-                    const row = csvData[i];
-                    if (row && row.length > nameIndex && row[nameIndex] && row[nameIndex].trim() !== '') {
-                        studentRows.push(row);
-                    }
-                }
+  const hr2=document.createElement('hr'); hr2.className='sdiv';
+  downloadSection.appendChild(hr2);
 
-                console.log('✓ 共收集到', studentRows.length, '位學生資料');
+  const ri=document.createElement('div'); ri.className='result-info';
+  if(byClass){
+    const sorted=sortCls(Object.keys(byClass));
+    ri.innerHTML=`<h3>✅ 班級分檔結果</h3><ul>
+      <li>班級數量：${sorted.length} 個，共 ${sorted.reduce((s,cn)=>s+byClass[cn].length-1,0)} 人</li>
+      ${sorted.map(cn=>`<li>${cn}：${byClass[cn].length-1} 人</li>`).join('')}</ul>`;
+    sorted.forEach(cn=>mkDlBtn(`${cn}.csv`,Papa.unparse(byClass[cn]),`📥 ${cn} (${byClass[cn].length-1}人)`));
+  }else{
+    const mc=matched.length-1, sorted=sortCls(Object.keys(remain));
+    ri.innerHTML=`<h3>✅ 跑班比對結果</h3><ul>
+      <li>跑班學生：${mc} 人</li><li>原班級：${sorted.length} 個</li>
+      ${sorted.map(cn=>`<li>${cn}：${remain[cn].length-1} 人</li>`).join('')}</ul>`;
+    mkDlBtn('跑班學生成績.csv',Papa.unparse(matched),`📥 跑班學生 (${mc}人)`);
+    sorted.forEach(cn=>mkDlBtn(`${cn}_成績.csv`,Papa.unparse(remain[cn]),`📥 ${cn} (${remain[cn].length-1}人)`));
+  }
+  downloadSection.appendChild(ri);
+}
 
-                const nameListSet = new Set();
-                nameListData.forEach(item => {
-                    if (item['姓名']) {
-                        nameListSet.add(item['姓名'].trim());
-                    }
-                });
-                
-                console.log('✓ 跑班名單學生:', Array.from(nameListSet));
+function mkDlBtn(fn,content,text){
+  const b=document.createElement('button');
+  b.className='download-btn'; b.textContent=text;
+  b.onclick=()=>{
+    const blob=new Blob(['\ufeff'+content],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=fn; a.click(); URL.revokeObjectURL(a.href);
+  };
+  downloadSection.appendChild(b);
+}
+function showStatus(msg,type){
+  statusEl.textContent=msg; statusEl.className='status '+type; statusEl.style.display='block';
+}
 
-                const matchedStudents = [headers];
-                const remainingByClass = {};
+function pctile(arr,p){
+  const n=arr.length; if(!n) return 0; if(n===1) return arr[0];
+  const idx=(p/100)*(n-1), lo=Math.floor(idx), hi=Math.ceil(idx);
+  return lo===hi?arr[lo]:arr[lo]+(idx-lo)*(arr[hi]-arr[lo]);
+}
+function calcStats(arr){
+  const n=arr.length; if(!n) return null;
+  const mean=arr.reduce((a,b)=>a+b,0)/n;
+  const std=Math.sqrt(arr.reduce((a,b)=>a+(b-mean)**2,0)/n);
+  const pass=arr.filter(s=>s>=60).length;
+  return{n,mean,std,pass,passRate:(pass/n*100).toFixed(1),
+    min:arr[0],max:arr[n-1],
+    q1:pctile(arr,25),q3:pctile(arr,75),median:pctile(arr,50)};
+}
+function getScores(rows,colIdx){
+  return rows.map(r=>parseFloat(r[colIdx])).filter(s=>!isNaN(s)&&s>=0).sort((a,b)=>a-b);
+}
+function getDbCol(hdrs){
+  function fc(kws,def){
+    for(let i=0;i<hdrs.length;i++){
+      if(!hdrs[i]) continue; const h=hdrs[i].trim();
+      for(const kw of kws) if(h===kw||h.includes(kw)) return i;
+    } return def!==undefined?def:-1;
+  }
+  return{
+    classShort:fc(['班級簡稱','班級'],3), seat:fc(['座號'],4),
+    studentId:fc(['學號'],2), name:fc(['姓名'],6),
+    score:fc(['新作答成績','作答成績','成績'],-1),
+    classRank:fc(['班級名次','班名次'],-1),
+    totalRank:fc(['全部名次','全校名次','年級名次'],-1)
+  };
+}
+function calcAllStats(){
+  return g_printData.groups.map(g=>{
+    const scores=getScores(g.rows,g_dbCol.score);
+    const st=calcStats(scores);
+    return{title:g.title,scores,...(st||{n:0})};
+  });
+}
+function calcZonePct(scores,fs){
+  const[top,front,avg,back,bot]=fs, n=scores.length;
+  if(!n) return[0,0,0,0,0,0];
+  return[
+    scores.filter(s=>s>=top).length,
+    scores.filter(s=>s>=front&&s<top).length,
+    scores.filter(s=>s>=avg&&s<front).length,
+    scores.filter(s=>s>=back&&s<avg).length,
+    scores.filter(s=>s>=bot&&s<back).length,
+    scores.filter(s=>s<bot).length
+  ].map(c=>+(c/n*100).toFixed(1));
+}
 
-                for (let row of studentRows) {
-                    const studentName = row[nameIndex] ? row[nameIndex].trim() : '';
-                    const className = row[classIndex] || '未知班級';
-                    
-                    if (nameListSet.has(studentName)) {
-                        matchedStudents.push(row);
-                        console.log('找到跑班學生:', studentName);
-                    } else {
-                        if (!remainingByClass[className]) {
-                            remainingByClass[className] = [headers];
-                        }
-                        remainingByClass[className].push(row);
-                    }
-                }
+function waitFrame(){
+  return new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,90)));
+}
 
-                const matchedCount = matchedStudents.length - 1;
-                console.log('✓ 符合跑班名單:', matchedCount, '人');
+function drawBoxPlot(canvas, allSt, fs, curIdx){
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.getBoundingClientRect();
+  const W=rect.width||canvas.offsetWidth||860;
+  const H=320;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
 
-                if (matchedCount === 0) {
-                    throw new Error('沒有找到任何符合跑班名單的學生！請檢查姓名是否相符');
-                }
+  const padL=48,padR=88,padT=22,padB=44;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const toY=v=>padT+plotH*(1-v/100);
+  const valid=allSt.filter(s=>s.n>0);
+  const n=valid.length; if(!n) return;
+  const slotW=plotW/n;
+  const toX=i=>padL+(i+0.5)*slotW;
+  const bw=Math.min(slotW*0.45,44);
 
-                generateDownloadFiles(matchedStudents, remainingByClass);
-                
-                showStatus(`✅ 處理完成！找到 ${matchedCount} 位跑班學生`, 'success');
-            } catch (error) {
-                console.error('❌ 錯誤:', error);
-                showStatus('❌ 處理失敗: ' + error.message, 'error');
-            }
-        }
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
 
-        function generateClassFiles(classesByName) {
-            downloadSection.style.display = 'block';
-            downloadSection.innerHTML = '<div class="result-info" id="resultInfo"></div>';
-            
-            const classCount = Object.keys(classesByName).length;
-            let totalStudents = 0;
-            
-            let infoHTML = '<h3>✅ 班級分檔結果</h3><ul>';
-            infoHTML += `<li><strong>🏫 班級數量:</strong> ${classCount} 個</li>`;
-            infoHTML += '</ul><h3>📚 各班級人數</h3><ul>';
-            
-            const sortedClasses = Object.keys(classesByName).sort();
-            for (let className of sortedClasses) {
-                const classData = classesByName[className];
-                const classCSV = Papa.unparse(classData);
-                const studentCount = classData.length - 1;
-                totalStudents += studentCount;
-                
-                createDownloadButton(`${className}.csv`, classCSV, `📥 ${className} (${studentCount}人)`);
-                infoHTML += `<li><strong>${className}:</strong> ${studentCount} 人</li>`;
-            }
-            
-            infoHTML = infoHTML.replace('班級數量:</strong> ' + classCount, 
-                                       '班級數量:</strong> ' + classCount + ' 個，共 ' + totalStudents + ' 人');
-            infoHTML += '</ul>';
-            document.getElementById('resultInfo').innerHTML = infoHTML;
-        }
+  ctx.font=`11px Microsoft JhengHei,Arial`;
+  for(let v=0;v<=100;v+=20){
+    const y=toY(v);
+    ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=0.6;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+    ctx.fillStyle='#888'; ctx.textAlign='right';
+    ctx.fillText(v,padL-6,y+4);
+  }
 
-        function generateDownloadFiles(matchedStudents, remainingByClass) {
-            downloadSection.style.display = 'block';
-            downloadSection.innerHTML = '<div class="result-info" id="resultInfo"></div>';
-            
-            const matchedCount = matchedStudents.length - 1;
-            
-            let infoHTML = '<h3>✅ 跑班比對結果</h3><ul>';
-            infoHTML += `<li><strong>🔄 跑班學生數量:</strong> ${matchedCount} 人</li>`;
-            infoHTML += `<li><strong>🏫 原班級數量:</strong> ${Object.keys(remainingByClass).length} 個</li>`;
-            infoHTML += '</ul><h3>📚 各班級人數分布</h3><ul>';
-            
-            const matchedCSV = Papa.unparse(matchedStudents);
-            createDownloadButton('跑班學生成績.csv', matchedCSV, `📥 下載跑班學生成績 (${matchedCount}人)`);
-            
-            const sortedClasses = Object.keys(remainingByClass).sort();
-            for (let className of sortedClasses) {
-                const classData = remainingByClass[className];
-                const classCSV = Papa.unparse(classData);
-                const studentCount = classData.length - 1;
-                createDownloadButton(`${className}_原班學生.csv`, classCSV, `📥 ${className} (${studentCount}人)`);
-                infoHTML += `<li><strong>${className}:</strong> ${studentCount} 人</li>`;
-            }
-            
-            infoHTML += '</ul>';
-            document.getElementById('resultInfo').innerHTML = infoHTML;
-        }
+  fs.forEach((val,i)=>{
+    const y=toY(val);
+    ctx.save();
+    ctx.strokeStyle=FS_LINE_CLR[i]; ctx.lineWidth=1.2;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=FS_LINE_CLR[i];
+    ctx.font=`bold 9.5px Microsoft JhengHei,Arial`;
+    ctx.textAlign='left';
+    ctx.fillText(`${FS_NAMES[i]} ${val}`,padL+plotW+5,y+4);
+    ctx.restore();
+  });
 
-        function createDownloadButton(filename, content, buttonText) {
-            const btn = document.createElement('button');
-            btn.className = 'download-btn';
-            btn.textContent = buttonText;
-            btn.onclick = function() {
-                downloadFile(filename, content);
-            };
-            downloadSection.appendChild(btn);
-        }
+  valid.forEach((s,i)=>{
+    if(!s.n) return;
+    const x=toX(i);
+    const vidx=allSt.indexOf(s);
+    const isCur=vidx===curIdx;
+    const clr=BOX_COLORS[i%BOX_COLORS.length];
+    const hw=bw/2;
+    const q1y=toY(s.q1),q3y=toY(s.q3),medy=toY(s.median);
+    const maxy=toY(s.max),miny=toY(s.min),meany=toY(s.mean);
+    ctx.save();
+    ctx.fillStyle=clr+(isCur?'55':'28');
+    ctx.fillRect(x-hw,q3y,bw,q1y-q3y);
+    ctx.strokeStyle=clr; ctx.lineWidth=isCur?2:1.5;
+    ctx.strokeRect(x-hw,q3y,bw,q1y-q3y);
+    ctx.beginPath(); ctx.moveTo(x-hw,medy); ctx.lineTo(x+hw,medy);
+    ctx.strokeStyle='#c0392b'; ctx.lineWidth=2.2; ctx.stroke();
+    ctx.strokeStyle=clr; ctx.lineWidth=1.4;
+    [[q3y,maxy],[q1y,miny]].forEach(([boxEnd,tipY])=>{
+      ctx.beginPath(); ctx.moveTo(x,boxEnd); ctx.lineTo(x,tipY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x-hw*.55,tipY); ctx.lineTo(x+hw*.55,tipY); ctx.stroke();
+    });
+    const dm=5; ctx.fillStyle=clr;
+    ctx.beginPath();
+    ctx.moveTo(x,meany-dm); ctx.lineTo(x+dm,meany);
+    ctx.lineTo(x,meany+dm); ctx.lineTo(x-dm,meany);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#222';
+    ctx.font=`bold 10px Microsoft JhengHei,Arial`;
+    ctx.textAlign='center';
+    ctx.fillText(s.mean.toFixed(1),x,meany-(isCur?10:8));
+    ctx.restore();
+  });
 
-        function downloadFile(filename, content) {
-            const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-            URL.revokeObjectURL(link.href);
-        }
+  valid.forEach((s,i)=>{
+    const x=toX(i);
+    const vidx=allSt.indexOf(s);
+    const isCur=vidx===curIdx;
+    ctx.fillStyle=isCur?'#E53935':'#444';
+    ctx.font=`${isCur?'bold ':''}11px Microsoft JhengHei,Arial`;
+    ctx.textAlign='center';
+    ctx.fillText(s.title,x,H-padB+16);
+  });
 
-        function showStatus(message, type) {
-            status.textContent = message;
-            status.className = 'status ' + type;
-            status.style.display = 'block';
-        }
-    </script>
+  ctx.strokeStyle='#555'; ctx.lineWidth=1.2;
+  ctx.beginPath();
+  ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH);
+  ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+}
+
+const HIST_BINS  =[[0,10],[10,20],[20,30],[30,40],[40,50],[50,60],[60,70],[70,80],[80,90],[90,101]];
+const HIST_LABELS=['0–9','10–19','20–29','30–39','40–49','50–59','60–69','70–79','80–89','90–100'];
+function histColor(lo){ return lo>=60?'#2E7D32':lo>=50?'#E65100':'#B71C1C'; }
+
+function buildHistChart(canvas, scores){
+  const binData=HIST_BINS.map(([lo,hi])=>scores.filter(s=>s>=lo&&s<hi).length);
+  return new Chart(canvas,{
+    type:'bar',
+    data:{labels:HIST_LABELS,datasets:[{
+      label:'人數',
+      data:binData,
+      backgroundColor:HIST_BINS.map(([lo])=>histColor(lo)+'CC'),
+      borderColor:HIST_BINS.map(([lo])=>histColor(lo)),
+      borderWidth:1,borderRadius:4
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:9}}},
+        y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},
+           title:{display:true,text:'人數',font:{size:9}}}
+      }
+    }
+  });
+}
+
+function buildStackChart(canvas, allSt, fs){
+  const valid=allSt.filter(s=>s.n>0);
+  const datasets=ZONE_LABELS.map((lbl,zi)=>({
+    label:lbl,
+    data:valid.map(s=>calcZonePct(s.scores,fs)[zi]),
+    backgroundColor:ZONE_COLORS[zi]+'CC',
+    borderColor:ZONE_COLORS[zi],
+    borderWidth:0.5
+  })).reverse();
+  return new Chart(canvas,{
+    type:'bar',
+    data:{labels:valid.map(s=>s.title),datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:false,
+      plugins:{
+        legend:{position:'right',labels:{font:{size:9},boxWidth:12,padding:6}}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},
+        y:{stacked:true,max:100,
+           ticks:{callback:v=>v+'%',font:{size:9}},
+           title:{display:true,text:'佔比(%)',font:{size:9}}}
+      }
+    }
+  });
+}
+
+async function printAllClassReports(){
+  if(!g_printData){showStatus('❌ 請先處理資料','error');return;}
+
+  g_dbCol=getDbCol(g_printData.headers);
+  if(g_dbCol.score<0){showStatus('❌ 找不到成績欄位','error');return;}
+
+  const allScores=[];
+  g_printData.groups.forEach(g=>g.rows.forEach(r=>{
+    const s=parseFloat(r[g_dbCol.score]); if(!isNaN(s)&&s>=0) allScores.push(s);
+  }));
+  allScores.sort((a,b)=>a-b);
+  g_dbFiveStd=FS_PCTS.map(p=>Math.round(pctile(allScores,p)));
+  g_dbAllStats=calcAllStats();
+  const schoolSt=calcStats(allScores);
+
+  const total=g_printData.groups.filter((_,i)=>g_dbAllStats[i]&&g_dbAllStats[i].n>0).length;
+  showStatus(`⏳ 正在產生圖表，共 ${total} 個班級，請稍候...`,'info');
+
+  const container=document.createElement('div');
+  container.style.cssText=
+    'position:fixed;left:-9999px;top:0;width:900px;overflow:visible;z-index:-1;';
+  document.body.appendChild(container);
+
+  const classPages=[];
+
+  for(let idx=0;idx<g_printData.groups.length;idx++){
+    const group =g_printData.groups[idx];
+    const curSt =g_dbAllStats[idx];
+    if(!curSt||!curSt.n) continue;
+
+    showStatus(`⏳ 正在處理 ${group.title}（${idx+1}/${g_printData.groups.length}）...`,'info');
+
+    const bpCvs=document.createElement('canvas');
+    bpCvs.style.cssText='display:block;width:860px;height:320px;';
+    container.appendChild(bpCvs);
+    drawBoxPlot(bpCvs,g_dbAllStats,g_dbFiveStd,idx);
+    const bpImg=bpCvs.toDataURL('image/png');
+    container.removeChild(bpCvs);
+
+    const hCvs=document.createElement('canvas');
+    hCvs.style.cssText='display:block;width:430px;height:220px;';
+    container.appendChild(hCvs);
+    const hChart=buildHistChart(hCvs,curSt.scores);
+    await waitFrame();
+    const hImg=hCvs.toDataURL('image/png');
+    hChart.destroy(); container.removeChild(hCvs);
+
+    const sCvs=document.createElement('canvas');
+    sCvs.style.cssText='display:block;width:430px;height:220px;';
+    container.appendChild(sCvs);
+    const sChart=buildStackChart(sCvs,g_dbAllStats,g_dbFiveStd);
+    await waitFrame();
+    const sImg=sCvs.toDataURL('image/png');
+    sChart.destroy(); container.removeChild(sCvs);
+
+    classPages.push(buildOneClassHTML(idx,group,curSt,schoolSt,bpImg,hImg,sImg));
+  }
+
+  document.body.removeChild(container);
+
+  if(!classPages.length){showStatus('❌ 沒有可列印的班級資料','error');return;}
+
+  const win=window.open('','_blank','width=960,height=800');
+  if(!win){showStatus('❌ 請允許瀏覽器彈出視窗','error');return;}
+
+  win.document.write(buildFullPrintHTML(classPages));
+  win.document.close(); win.focus();
+  setTimeout(()=>win.print(),700);
+  showStatus(`✅ 已開啟列印視窗，共 ${classPages.length} 個班級`,'success');
+}
+
+function buildOneClassHTML(idx, group, curSt, schoolSt, bpImg, histImg, stackImg){
+  const isKopan=group.title==='跑班學生';
+  const allSt  =g_dbAllStats;
+  const fs     =g_dbFiveStd;
+  const col    =g_dbCol;
+  const today  =new Date().toLocaleDateString('zh-TW');
+
+  const rankList=[...allSt].filter(s=>s.title!=='跑班學生'&&s.n>0)
+    .sort((a,b)=>b.mean-a.mean);
+  const getRank=t=>{ const i=rankList.findIndex(s=>s.title===t); return i>=0?`第${i+1}名`:'—'; };
+  let classRank=null;
+  if(!isKopan){ const ri=rankList.findIndex(s=>s.title===group.title); if(ri>=0) classRank=ri+1; }
+
+  const tblRows=allSt.map((s,i)=>{
+    if(!s.n) return '';
+    const diff=schoolSt?s.mean-schoolSt.mean:null;
+    const diffStr=diff===null?'—':
+      `<span style="color:${diff>=0?'#1B5E20':'#B71C1C'};font-weight:bold;">${diff>=0?'+':''}${diff.toFixed(2)}</span>`;
+    const isCur=i===idx;
+    return`<tr style="${isCur?'background:#FFFDE7;font-weight:bold;':''}">
+      <td>${isCur?'▶ ':''}${s.title}</td>
+      <td>${s.n}</td><td>${s.mean.toFixed(2)}</td>
+      <td>${schoolSt?schoolSt.mean.toFixed(2):'—'}</td>
+      <td>${diffStr}</td><td>${s.max}</td><td>${s.min}</td>
+      <td>${s.std.toFixed(2)}</td><td>${s.median.toFixed(1)}</td>
+      <td>${s.title==='跑班學生'?'—':getRank(s.title)}</td>
+    </tr>`;
+  }).join('');
+  const schoolRow=schoolSt?`<tr style="background:#E8EAF6;font-weight:bold;">
+    <td>全校</td><td>${schoolSt.n}</td>
+    <td>${schoolSt.mean.toFixed(2)}</td><td>${schoolSt.mean.toFixed(2)}</td>
+    <td>—</td><td>${schoolSt.max}</td><td>${schoolSt.min}</td>
+    <td>${schoolSt.std.toFixed(2)}</td><td>${schoolSt.median.toFixed(1)}</td><td>—</td>
+  </tr>`:'';
+
+  const zoneRows=allSt.filter(s=>s.n>0).map(s=>{
+    const zones=calcZonePct(s.scores,fs);
+    const isCur=s.title===group.title;
+    return`<tr style="${isCur?'background:#FFFDE7;font-weight:bold;':''}">
+      <td>${s.title}</td>
+      ${zones.map((z,zi)=>`<td style="color:${ZONE_COLORS[zi]};font-weight:bold;">${z}%</td>`).join('')}
+    </tr>`;
+  }).join('');
+
+  const sorted=[...group.rows].sort((a,b)=>
+    (parseFloat(b[col.score])||0)-(parseFloat(a[col.score])||0));
+  const top5=sorted.slice(0,5);
+  const bot5=[...group.rows].sort((a,b)=>
+    (parseFloat(a[col.score])||0)-(parseFloat(b[col.score])||0)).slice(0,5);
+
+  function pStuRow(r,rank,isTop){
+    const seat=col.seat>=0?(r[col.seat]??''):'';
+    const name=col.name>=0?(r[col.name]??''):'';
+    const sid =col.studentId>=0?(r[col.studentId]??''):'';
+    const sc  =col.score>=0?(r[col.score]??''):'';
+    const cr  =col.classRank>=0?(r[col.classRank]??''):'';
+    const em  =rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+    return`<tr style="background:${isTop?'#E8F5E9':'#FFEBEE'}">
+      <td>${em}</td><td>${seat}</td><td>${sid}</td><td>${name}</td>
+      <td><strong style="${isTop?'':'color:#B71C1C;'}">${sc}</strong></td><td>${cr}</td>
+    </tr>`;
+  }
+
+  const fsBar=FS_NAMES.map((n,i)=>
+    `<strong style="color:${FS_LINE_CLR[i]};">${n}：${fs[i]}</strong>`).join('&emsp;|&emsp;');
+  const rankBadge=(!isKopan&&classRank)?
+    `<span style="display:inline-block;background:#E65100;color:white;`+
+    `padding:3px 12px;border-radius:20px;font-size:11px;margin-left:10px;font-weight:normal;">`+
+    `班級排名 第${classRank}/${rankList.length}名</span>`:'';
+
+  return`
+<div class="class-page">
+  <h1>${isKopan?'🔄 跑班學生':'🏫 '+group.title} 成績分析${rankBadge}</h1>
+  <div class="sub-info">
+    列印日期：${today}&emsp;應考人數：${curSt.n} 人&emsp;
+    班級平均：<strong>${curSt.mean.toFixed(2)}</strong> 分&emsp;
+    全校平均：<strong>${schoolSt?schoolSt.mean.toFixed(2):'—'}</strong> 分&emsp;
+    及格率：<strong>${curSt.passRate}%</strong>
+  </div>
+
+  <div class="sec-hd">📋 全校各班成績摘要</div>
+  <div class="fs-bar">🎯 全校五標（百分位計算）：${fsBar}</div>
+  <table class="main-tbl">
+    <thead><tr>
+      <th>班級名稱</th><th>人數</th><th>班級平均</th><th>全校平均</th>
+      <th>差值(↑↓)</th><th>最高</th><th>最低</th><th>標準差</th><th>中位數</th><th>排名</th>
+    </tr></thead>
+    <tbody>${tblRows}${schoolRow}</tbody>
+  </table>
+
+  <div class="sec-hd">
+    🎻 各班成績分布盒鬚圖&ensp;
+    <span style="font-size:.85em;font-weight:normal;color:#555;">— 中位數&ensp;◆ 平均分</span>
+  </div>
+  <div class="img-box">
+    <img src="${bpImg}" style="height:190px;object-fit:contain;width:100%;">
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-box">
+      <div class="chart-title">
+        📊 成績分布直方圖（班級平均：${curSt.mean.toFixed(2)}，全校：${schoolSt?schoolSt.mean.toFixed(2):'—'}）
+      </div>
+      <img src="${histImg}">
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">📊 各班五標區間比例（%）</div>
+      <img src="${stackImg}">
+    </div>
+  </div>
+
+  <div class="sec-hd">📊 各班五標區間分佈表</div>
+  <table class="main-tbl">
+    <thead><tr>
+      <th>班級</th>
+      ${ZONE_LABELS.map((z,i)=>`<th style="color:white;${ZONE_COLORS[i]};">${z}</th>`).join('')}
+    </tr></thead>
+    <tbody>${zoneRows}</tbody>
+  </table>
+
+  <div class="two-col">
+    <div>
+      <div class="tbl-hd" style="background:linear-gradient(135deg,#1B5E20,#2E7D32);">
+        🏆 拔尖名單（本班前5名）
+      </div>
+      <table class="stu-tbl">
+        <thead><tr><th>名次</th><th>座號</th><th>學號</th><th>姓名</th><th>成績</th><th>班排</th></tr></thead>
+        <tbody>${top5.map((r,i)=>pStuRow(r,i+1,true)).join('')}</tbody>
+      </table>
+    </div>
+    <div>
+      <div class="tbl-hd" style="background:linear-gradient(135deg,#B71C1C,#C62828);">
+        ⚠️ 預警名單（本班後5名）
+      </div>
+      <table class="stu-tbl">
+        <thead><tr><th>名次</th><th>座號</th><th>學號</th><th>姓名</th><th>成績</th><th>班排</th></tr></thead>
+        <tbody>${bot5.map((r,i)=>pStuRow(r,i+1,false)).join('')}</tbody>
+      </table>
+    </div>
+  </div>
+</div>`;
+}
+
+function buildFullPrintHTML(classPages){
+  return`<!DOCTYPE html>
+<html lang="zh-TW"><head><meta charset="UTF-8">
+<title>所有班級成績分析報告</title>
+<style>
+@page{size:A4 portrait;margin:11mm 11mm;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Microsoft JhengHei','PingFang TC',Arial,sans-serif;
+     font-size:8.5px;color:#111;
+     -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+.class-page{page-break-after:always;padding-bottom:2mm;}
+.class-page:last-child{page-break-after:avoid;}
+
+h1{font-size:16px;text-align:center;font-weight:bold;color:#1A1A2E;
+   letter-spacing:2px;
+   padding:0 0 8px;
+   border-bottom:3px solid #3949AB;
+   margin-bottom:8px;}
+.sub-info{text-align:center;color:#555;font-size:8px;
+          margin-bottom:10px;line-height:1.7;}
+
+.sec-hd{font-size:8.5px;font-weight:bold;color:#1A1A2E;
+        background:#E8EAF6;border-left:4px solid #3949AB;
+        padding:5px 12px;
+        margin:10px 0 6px;
+        border-radius:0 4px 4px 0;}
+
+.fs-bar{background:#EDF2FF;border:1px solid #c5d0e8;border-radius:5px;
+        padding:6px 12px;
+        margin-bottom:7px;
+        font-size:8px;color:#1A237E;font-weight:bold;line-height:1.5;}
+
+table{width:100%;border-collapse:collapse;}
+.main-tbl th{background:#2c3e50;color:white;
+             padding:6px 5px;
+             text-align:center;font-size:8px;white-space:nowrap;}
+.main-tbl td{padding:5px 5px;
+             text-align:center;
+             border:1px solid #dde;font-size:8px;white-space:nowrap;
+             line-height:1.45;}
+.main-tbl tbody tr:nth-child(even) td{background:#f7f8fc;}
+
+.img-box{border:1px solid #e0e0e0;border-radius:5px;
+         padding:6px;
+         margin-bottom:8px;}
+
+.chart-row{display:grid;grid-template-columns:1fr 1fr;
+           gap:8px;
+           margin-bottom:8px;}
+.chart-box{border:1px solid #e0e0e0;border-radius:5px;
+           padding:8px;}
+.chart-title{font-size:8px;font-weight:bold;
+             margin-bottom:5px;
+             color:#333;border-bottom:1px solid #eee;
+             padding-bottom:4px;}
+.chart-box img{width:100%;display:block;}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;
+         gap:8px;
+         margin-top:10px;}
+.tbl-hd{color:white;padding:5px 10px;
+        font-size:8px;font-weight:bold;
+        border-radius:4px 4px 0 0;}
+.stu-tbl th{background:#37474F;color:white;
+            padding:5px 6px;
+            text-align:center;font-size:8px;}
+.stu-tbl td{padding:4px 6px;
+            text-align:center;
+            border-bottom:1px solid #eee;
+            font-size:8px;line-height:1.45;}
+</style>
+</head><body>
+${classPages.join('\n')}
+</body></html>`;
+}
+
+function printAllClasses(){
+  if(!g_printData){showStatus('❌ 請先處理資料','error');return;}
+  const headers=g_printData.headers;
+  function fc(kws,def){
+    for(let i=0;i<headers.length;i++){
+      if(!headers[i]) continue; const h=headers[i].trim();
+      for(const kw of kws) if(h===kw||h.includes(kw)) return i;
+    } return def!==undefined?def:-1;
+  }
+  const col={
+    classShort:fc(['班級簡稱','班級'],3), seat:fc(['座號'],4),
+    studentId:fc(['學號'],2), name:fc(['姓名'],6),
+    score:fc(['新作答成績','作答成績','成績'],-1),
+    classRank:fc(['班級名次','班名次'],-1),
+    totalRank:fc(['全部名次','全校名次','年級名次'],-1),
+    answer:fc(['作答情形'],-1)
+  };
+  const maxN=Math.max(...g_printData.groups.map(g=>g.rows.length));
+  const rowH=Math.max(10,Math.min(17,Math.floor(826/maxN)));
+  const fs=rowH>=16?11:rowH>=14?10:rowH>=12?9:rowH>=11?8:7;
+  const today=new Date().toLocaleDateString('zh-TW');
+  let pagesHTML='';
+  for(const group of g_printData.groups){
+    const cn=group.title;
+    const students=[...group.rows].sort((a,b)=>{
+      if(cn==='跑班學生'){
+        const c=(a[col.classShort]||'').localeCompare(b[col.classShort]||'','zh-TW');
+        if(c) return c;
+      }
+      return(parseInt(a[col.seat])||0)-(parseInt(b[col.seat])||0);
+    });
+    const scores=students.map(s=>parseFloat(s[col.score])).filter(n=>!isNaN(n));
+    const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';
+    const hi=scores.length?Math.max(...scores):'—';
+    const lo=scores.length?Math.min(...scores):'—';
+    const pass=scores.length?scores.filter(s=>s>=60).length+' 人':'—';
+    const rows=students.map((s,i)=>{
+      const sc=col.score>=0?(s[col.score]??''):'';
+      const scN=parseFloat(sc);
+      return`<tr class="${i%2===0?'re':'ro'}">
+        <td>${col.classShort>=0?(s[col.classShort]??''):''}</td>
+        <td>${col.seat>=0?(s[col.seat]??''):''}</td>
+        <td>${col.studentId>=0?(s[col.studentId]??''):''}</td>
+        <td>${col.name>=0?(s[col.name]??''):''}</td>
+        <td style="font-weight:700;color:${!isNaN(scN)&&scN<60?'#c0392b':'inherit'}">${sc}</td>
+        <td>${col.classRank>=0?(s[col.classRank]??''):''}</td>
+        <td>${col.totalRank>=0?(s[col.totalRank]??''):''}</td>
+        <td class="ta">${col.answer>=0?(s[col.answer]??''):''}</td>
+      </tr>`;
+    }).join('');
+    pagesHTML+=`<div class="cp">
+      <div class="ph">
+        <div class="ct">${cn} 成績單</div>
+        <div class="pm">人數：${students.length}&emsp;平均：${avg}&emsp;最高：${hi}&emsp;最低：${lo}&emsp;及格：${pass}&emsp;日期：${today}</div>
+      </div>
+      <table><thead><tr>
+        <th class="c1">班級</th><th class="c2">座號</th><th class="c3">學號</th>
+        <th class="c4">姓名</th><th class="c5">成績</th>
+        <th class="c6">班排</th><th class="c7">校排</th><th class="c8">作答情形</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }
+  const win=window.open('','_blank','width=1400,height=900');
+  if(!win){showStatus('❌ 請允許彈出視窗','error');return;}
+  win.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+<style>
+@page{size:B4 landscape;margin:8mm 12mm;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Microsoft JhengHei',Arial,sans-serif;font-size:${fs}px;
+     -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.cp{page-break-after:always;}.cp:last-child{page-break-after:auto;}
+.ph{text-align:center;margin-bottom:3px;border-bottom:2px solid #2c3e50;padding-bottom:2px;}
+.ct{font-size:${Math.min(fs+5,17)}px;font-weight:bold;letter-spacing:2px;}
+.pm{font-size:${Math.max(fs-1,7)}px;color:#444;}
+table{width:100%;border-collapse:collapse;table-layout:fixed;}
+th{background:#2c3e50;color:white;padding:2px;text-align:center;
+   border:1px solid #1a252f;font-size:${fs}px;height:${fs+6}px;}
+td{padding:0 2px;border:1px solid #ccc;text-align:center;
+   font-size:${fs}px;height:${rowH}px;overflow:hidden;vertical-align:middle;}
+.re{background:#fff;}.ro{background:#eef2ff;}
+.ta{text-align:left;font-family:'Courier New',Consolas,monospace;
+    font-size:${Math.max(fs-1,6)}px;word-break:break-all;padding:0 2px;}
+.c1{width:7%}.c2{width:5%}.c3{width:10%}.c4{width:8%}
+.c5{width:9%}.c6{width:6%}.c7{width:6%}.c8{width:49%}
+</style></head><body>${pagesHTML}</body></html>`);
+  win.document.close(); win.focus();
+  setTimeout(()=>win.print(),700);
+}
+</script>
 </body>
 </html>
