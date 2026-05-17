@@ -1879,7 +1879,7 @@ function showDebugModal(studentIndex) {
 }
 
 // ─────────────────────────────────────────────────────────
-// 下載 CSV
+// 下載 CSV（★ 已修正：依新分數重新計算班級名次與全部名次）
 // ─────────────────────────────────────────────────────────
 function downloadResults() {
     try {
@@ -1921,11 +1921,55 @@ function downloadResults() {
         });
         csv += '\n';
 
+        // ─── ★ 依新分數重新計算名次（缺考者不參與排名） ─────
+        // 全部名次（同分同名次，採標準競賽排名 1224 法）
+        const overallSorted = [...presentData].sort(
+            (a,b) => parseFloat(b.新分數) - parseFloat(a.新分數)
+        );
+        const overallRankMap = new Map(); // key: 學號 -> 全部名次
+        let lastScoreAll = null, lastRankAll = 0;
+        overallSorted.forEach((s, idx) => {
+            const sc = parseFloat(s.新分數);
+            const rank = (sc === lastScoreAll) ? lastRankAll : (idx + 1);
+            overallRankMap.set(s['學號'], rank);
+            lastScoreAll = sc;
+            lastRankAll  = rank;
+        });
+
+        // 班級名次（依班級分組後各自排名）
+        const classRankMap = new Map(); // key: 學號 -> 班級名次
+        const byClass = {};
+        presentData.forEach(s => {
+            const cls = s['班級簡稱'] || '未分類';
+            (byClass[cls] = byClass[cls] || []).push(s);
+        });
+        Object.values(byClass).forEach(list => {
+            list.sort((a,b) => parseFloat(b.新分數) - parseFloat(a.新分數));
+            let lScore = null, lRank = 0;
+            list.forEach((s, idx) => {
+                const sc = parseFloat(s.新分數);
+                const rank = (sc === lScore) ? lRank : (idx + 1);
+                classRankMap.set(s['學號'], rank);
+                lScore = sc;
+                lRank  = rank;
+            });
+        });
+        // ─────────────────────────────────────────────────
+
         const sHeaders = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','學號','姓名','性別','新作答成績','班級名次','全部名次','學生答案','作答情形'];
         csv += sHeaders.join(',') + '\n';
         processedData.forEach(row => {
             const vals = ['科目代號','科目簡稱','班級代號','班級簡稱','座號','學號','姓名','性別'].map(k=>row[k]||'');
-            vals.push(row['新分數']||'', row['班級名次']||'', row['全部名次']||'', row['學生答案']||'', row['作答情形']||'');
+            // ★ 缺考者名次與分數欄留空；其餘採用重新計算的名次
+            const newClassRank   = row.缺考 ? '' : (classRankMap.get(row['學號'])   ?? '');
+            const newOverallRank = row.缺考 ? '' : (overallRankMap.get(row['學號']) ?? '');
+            vals.push(
+                row.缺考 ? '' : (row['新分數'] || ''),
+                newClassRank,
+                newOverallRank,
+                row['學生答案'] || '',
+                row['作答情形'] || ''
+            );
             csv += vals.map(v=>`"${v}"`).join(',') + '\n';
         });
 

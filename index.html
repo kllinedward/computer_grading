@@ -196,6 +196,43 @@
         .rf-chip.chip-chart      { background-color: #fff3cd; color: #856404; }
         .rf-chip.chip-print      { background-color: #fde8e8; color: #7b1f1f; }
 
+        /* --- 修正紀錄區塊 --- */
+        .update-log {
+            margin-top: 12px;
+            margin-bottom: 18px;
+            padding: 10px 14px;
+            background-color: #fff8e6;
+            border-left: 4px solid #ffa726;
+            border-radius: 6px;
+        }
+        .update-log .ul-title {
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #b26a00;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .update-log .ul-item {
+            font-size: 0.85em;
+            color: #5d4500;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.5;
+        }
+        .update-log .ul-date {
+            background-color: #ffa726;
+            color: #fff;
+            font-size: 0.78em;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
         /* --- NEW 閃爍標籤 --- */
         .badge-new {
             display: inline-block;
@@ -281,6 +318,13 @@
                             <span class="sf-chip chip-multi">✦ 多答案題</span>
                             <span class="sf-chip chip-bonus">🎁 送分題</span>
                             <span class="sf-chip chip-exclude">⛔ 不計分題</span>
+                        </div>
+                    </div>
+                    <div class="update-log">
+                        <div class="ul-title">🛠️ 修正紀錄 <span class="badge-new">NEW</span></div>
+                        <div class="ul-item">
+                            <span class="ul-date">2026/05/17</span>
+                            <span>修正下載成績單時班級名次與全部名次未依新分數重新計算的問題（缺考者不參與排名）。</span>
                         </div>
                     </div>
                     <a href="change_score.html" class="button">進入系統</a>
