@@ -28,19 +28,47 @@ h1{color:#667eea;text-align:center;margin-bottom:30px;font-size:2em;}
 button{background:#28a745;color:white;border:none;padding:15px 30px;font-size:1.1em;border-radius:8px;cursor:pointer;transition:all .3s;width:100%;margin-top:15px;}
 button:hover{background:#218838;}
 button:disabled{background:#ccc;cursor:not-allowed;}
-.status{margin-top:15px;padding:15px;border-radius:8px;display:none;}
+.status{margin-top:15px;padding:15px;border-radius:8px;display:none;line-height:1.6;}
 .status.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}
 .status.error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;}
 .status.info{background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb;}
 .download-section{margin-top:20px;display:none;}
 .download-btn{background:#17a2b8;margin-top:10px;padding:12px 20px;font-size:1em;}
 .download-btn:hover{background:#138496;}
-.hidden{display:none;}
+.hidden{display:none !important;}
 .sdiv{border:none;border-top:2px dashed #e0e0e0;margin:14px 0;}
 .result-info{margin-top:16px;padding:15px;background:white;border-radius:8px;border-left:4px solid #667eea;}
 .result-info h3{color:#667eea;margin-bottom:10px;}
 .result-info ul{list-style:none;padding:0;}
 .result-info li{padding:4px 0;color:#555;}
+
+/* 跑班抽離設定擴充樣式 */
+.pullout-mode-selector{display:flex;gap:12px;margin:12px 0 16px;}
+.pullout-type-btn{flex:1;padding:12px 16px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;background:#fff;transition:all .25s;display:flex;align-items:center;gap:12px;}
+.pullout-type-btn:hover{border-color:#667eea;background:#f8faff;}
+.pullout-type-btn.active{border-color:#667eea;background:#eef3ff;box-shadow:0 3px 10px rgba(102,126,234,.15);}
+.pullout-type-btn .p-icon{font-size:1.6em;}
+.pullout-type-btn strong{display:block;color:#333;font-size:1.02em;margin-bottom:2px;}
+.pullout-type-btn .sub{font-size:0.83em;color:#666;}
+.dual-source-tabs{display:flex;gap:10px;margin:10px 0 14px;}
+.source-tab{padding:8px 16px;border-radius:6px;cursor:pointer;font-size:0.9em;border:1px solid #cbd5e1;background:#fff;color:#555;transition:all .2s;user-select:none;}
+.source-tab:hover{border-color:#667eea;color:#667eea;}
+.source-tab.active{background:#667eea;color:#fff;border-color:#667eea;font-weight:bold;}
+.dual-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:768px){.dual-cards-grid{grid-template-columns:1fr;}}
+.pullout-card{background:#ffffff;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,.03);}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.card-header label{font-size:0.92em;color:#444;font-weight:bold;white-space:nowrap;}
+.name-input{flex:1;padding:8px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:0.95em;color:#333;outline:none;transition:border-color .2s;}
+.name-input:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.15);}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:0.82em;font-weight:bold;color:white;white-space:nowrap;}
+.badge-1{background:linear-gradient(135deg,#1565C0,#1976D2);}
+.badge-2{background:linear-gradient(135deg,#6A1B9A,#8E24AA);}
+.file-label-blue{background:#1976D2;}
+.file-label-blue:hover{background:#0D47A1;}
+.file-label-purple{background:#7B1FA2;}
+.file-label-purple:hover{background:#4A148C;}
+.sheet-detect-info{margin-top:14px;padding:12px;background:#f0f9ff;border-left:4px solid #0288d1;border-radius:6px;}
 </style>
 </head>
 <body>
@@ -62,12 +90,107 @@ button:disabled{background:#ccc;cursor:not-allowed;}
 </div>
 
 <div class="section" id="nameListSection">
-  <h2>1️⃣ 上傳跑班名單 (Excel)</h2>
-  <div class="file-input-wrapper">
-    <label class="file-input-label" for="nameListFile">選擇跑班名單 (.xlsx)</label>
-    <input type="file" id="nameListFile" accept=".xlsx">
+  <h2>1️⃣ 跑班抽離設定與名單上傳 (Excel)</h2>
+  
+  <div class="pullout-mode-selector">
+    <div class="pullout-type-btn active" id="btnPullOut1" onclick="switchPullOutCount(1)">
+      <span class="p-icon">1️⃣</span>
+      <div>
+        <strong>抽離一個班（單一跑班）</strong>
+        <div class="sub">例如：兩班或多班抽出 1 個跑班（相容原系統）</div>
+      </div>
+    </div>
+    <div class="pullout-type-btn" id="btnPullOut2" onclick="switchPullOutCount(2)">
+      <span class="p-icon">2️⃣</span>
+      <div>
+        <strong>同時抽離二個班（雙跑班）</strong>
+        <div class="sub">例如：甲乙抽出一個班，且丙丁抽出一個班</div>
+      </div>
+    </div>
   </div>
-  <div class="file-name" id="nameListFileName">尚未選擇檔案</div>
+
+  <!-- 單一跑班介面 -->
+  <div id="singlePullOutUI">
+    <div class="pullout-card">
+      <div class="card-header">
+        <label for="nameListTitleSingle">跑班班級名稱：</label>
+        <input type="text" id="nameListTitleSingle" value="跑班學生" placeholder="自訂名稱，例如：跑班學生 或 甲乙跑班" class="name-input">
+      </div>
+      <div class="file-input-wrapper">
+        <label class="file-input-label" for="nameListFileSingle">選擇跑班名單 (.xlsx)</label>
+        <input type="file" id="nameListFileSingle" accept=".xlsx">
+      </div>
+      <div class="file-name" id="nameListFileNameSingle">尚未選擇檔案</div>
+    </div>
+  </div>
+
+  <!-- 雙跑班介面 -->
+  <div id="dualPullOutUI" class="hidden">
+    <div class="dual-source-tabs">
+      <div class="source-tab active" id="tabDualTwoFiles" onclick="switchDualSource('twoFiles')">
+        📂 分別上傳 2 個名單檔案（推薦）
+      </div>
+      <div class="source-tab" id="tabDualOneFile" onclick="switchDualSource('oneFile')">
+        📑 上傳 1 個 Excel 檔（含 2 個工作表 Sheet 或分組欄位）
+      </div>
+    </div>
+
+    <!-- 方式 A：分開上傳兩個檔案 -->
+    <div id="dualTwoFilesContainer" class="dual-cards-grid">
+      <div class="pullout-card">
+        <div class="card-header">
+          <span class="badge badge-1">第 1 個跑班</span>
+          <input type="text" id="nameListTitle1" value="跑班一（甲乙）" placeholder="班級名稱，例：跑班一" class="name-input">
+        </div>
+        <div class="file-input-wrapper">
+          <label class="file-input-label file-label-blue" for="nameListFile1">選擇跑班 1 名單 (.xlsx)</label>
+          <input type="file" id="nameListFile1" accept=".xlsx">
+        </div>
+        <div class="file-name" id="nameListFileName1">尚未選擇檔案</div>
+      </div>
+
+      <div class="pullout-card">
+        <div class="card-header">
+          <span class="badge badge-2">第 2 個跑班</span>
+          <input type="text" id="nameListTitle2" value="跑班二（丙丁）" placeholder="班級名稱，例：跑班二" class="name-input">
+        </div>
+        <div class="file-input-wrapper">
+          <label class="file-input-label file-label-purple" for="nameListFile2">選擇跑班 2 名單 (.xlsx)</label>
+          <input type="file" id="nameListFile2" accept=".xlsx">
+        </div>
+        <div class="file-name" id="nameListFileName2">尚未選擇檔案</div>
+      </div>
+    </div>
+
+    <!-- 方式 B：單一檔案雙工作表/分組 -->
+    <div id="dualOneFileContainer" class="hidden">
+      <div class="pullout-card">
+        <div class="card-header">
+          <span style="font-weight:bold;color:#444;">📑 單一 Excel 包含兩組跑班資料</span>
+        </div>
+        <div class="file-input-wrapper">
+          <label class="file-input-label" for="nameListFileCombined">選擇包含兩組名單的 Excel (.xlsx)</label>
+          <input type="file" id="nameListFileCombined" accept=".xlsx">
+        </div>
+        <div class="file-name" id="nameListFileNameCombined">尚未選擇檔案</div>
+        <div id="detectedDualSheets" class="sheet-detect-info hidden">
+          <div style="font-size:0.92em;color:#0288d1;font-weight:bold;margin-bottom:8px;">✅ 成功偵測到兩組名單：</div>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label style="font-size:0.85em;color:#555;font-weight:bold;">第 1 組班級名稱：</label>
+              <input type="text" id="nameListTitleCombined1" value="跑班一" class="name-input" style="width:100%;margin-top:4px;">
+              <div id="sheetCount1" style="font-size:0.82em;color:#666;margin-top:4px;"></div>
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:0.85em;color:#555;font-weight:bold;">第 2 組班級名稱：</label>
+              <input type="text" id="nameListTitleCombined2" value="跑班二" class="name-input" style="width:100%;margin-top:4px;">
+              <div id="sheetCount2" style="font-size:0.82em;color:#666;margin-top:4px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="section">
@@ -90,7 +213,7 @@ button:disabled{background:#ccc;cursor:not-allowed;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 const GRADE_ORDER=['一','二','三','四','五','六','七','八','九','十'];
 const CLASS_ORDER=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
@@ -102,14 +225,21 @@ const FS_NAMES  =['頂標','前標','均標','後標','底標'];
 const FS_PCTS   =[88,75,50,25,12];
 const FS_LINE_CLR=['#0D47A1','#1976D2','#0097A7','#E65100','#C62828'];
 
-let nameListData=null, csvData=null, csvFile_stored=null, currentMode='nameList';
-let g_printData=null, g_dbCol=null, g_dbFiveStd=null, g_dbAllStats=null;
+let pullOutCount = 1;       // 1 或 2
+let dualSource = 'twoFiles'; // 'twoFiles' 或 'oneFile'
+let singleListData = null;
+let dualListData1 = null;
+let dualListData2 = null;
+let combinedData1 = null;
+let combinedData2 = null;
 
-const nameListFile  =document.getElementById('nameListFile');
-const csvFileInput  =document.getElementById('csvFile');
-const processBtn    =document.getElementById('processBtn');
-const statusEl      =document.getElementById('status');
-const downloadSection=document.getElementById('downloadSection');
+let csvData = null, csvFile_stored = null, currentMode = 'nameList';
+let g_printData = null, g_dbCol = null, g_dbFiveStd = null, g_dbAllStats = null;
+
+const csvFileInput   = document.getElementById('csvFile');
+const processBtn     = document.getElementById('processBtn');
+const statusEl       = document.getElementById('status');
+const downloadSection= document.getElementById('downloadSection');
 
 function selectMode(mode){
   currentMode=mode;
@@ -118,21 +248,183 @@ function selectMode(mode){
   document.getElementById('nameListSection').classList.toggle('hidden',mode==='classOnly');
   document.getElementById('csvSectionTitle').textContent=
     mode==='classOnly'?'1️⃣ 上傳成績 CSV 檔案':'2️⃣ 上傳成績 CSV 檔案';
-  if(mode==='classOnly') nameListData=null;
   g_printData=null; downloadSection.style.display='none';
   checkReady();
 }
 
-nameListFile.addEventListener('change',e=>{
-  const f=e.target.files[0]; if(!f) return;
-  document.getElementById('nameListFileName').textContent='已選擇: '+f.name;
-  const r=new FileReader();
-  r.onload=ev=>{
-    try{
-      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-      nameListData=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-      checkReady(); showStatus('✅ 跑班名單讀取成功！共 '+nameListData.length+' 筆','success');
-    }catch(err){showStatus('❌ 讀取失敗: '+err.message,'error');}
+function switchPullOutCount(count){
+  pullOutCount = count;
+  document.getElementById('btnPullOut1').classList.toggle('active', count === 1);
+  document.getElementById('btnPullOut2').classList.toggle('active', count === 2);
+  document.getElementById('singlePullOutUI').classList.toggle('hidden', count !== 1);
+  document.getElementById('dualPullOutUI').classList.toggle('hidden', count !== 2);
+  g_printData = null;
+  downloadSection.style.display = 'none';
+  checkReady();
+}
+
+function switchDualSource(source){
+  dualSource = source;
+  document.getElementById('tabDualTwoFiles').classList.toggle('active', source === 'twoFiles');
+  document.getElementById('tabDualOneFile').classList.toggle('active', source === 'oneFile');
+  document.getElementById('dualTwoFilesContainer').classList.toggle('hidden', source !== 'twoFiles');
+  document.getElementById('dualOneFileContainer').classList.toggle('hidden', source !== 'oneFile');
+  g_printData = null;
+  downloadSection.style.display = 'none';
+  checkReady();
+}
+
+function normName(s){
+  return String(s || '').replace(/[\s\uFEFF\u200B\u3000]+/g, '');
+}
+
+function extractNamesFromRows(rows){
+  if(!rows || !rows.length) return [];
+  const names = [];
+  for(const row of rows){
+    let val = '';
+    for(const k of Object.keys(row)){
+      const kt = k.trim();
+      if(kt === '姓名' || kt.includes('姓名') || kt.toLowerCase() === 'name'){
+        val = row[k];
+        break;
+      }
+    }
+    if(!val && row['姓名'] !== undefined) val = row['姓名'];
+    if(val !== undefined && val !== null){
+      const s = String(val).trim();
+      if(s && s !== '姓名' && !s.includes('合計') && !s.includes('總計')){
+        names.push(s);
+      }
+    }
+  }
+  return names;
+}
+
+// 1. 單一跑班檔案監聽
+const nameListFileSingle = document.getElementById('nameListFileSingle');
+nameListFileSingle.addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  document.getElementById('nameListFileNameSingle').textContent = '已選擇: ' + f.name;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+      const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      singleListData = extractNamesFromRows(rawRows);
+      checkReady();
+      showStatus(`✅ 跑班名單讀取成功！共 ${singleListData.length} 筆姓名`, 'success');
+    } catch(err){
+      showStatus('❌ 讀取失敗: ' + err.message, 'error');
+    }
+  };
+  r.readAsArrayBuffer(f);
+});
+
+// 2. 雙跑班 - 檔案 1 監聽
+const nameListFile1 = document.getElementById('nameListFile1');
+nameListFile1.addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  document.getElementById('nameListFileName1').textContent = '已選擇: ' + f.name;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+      const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      dualListData1 = extractNamesFromRows(rawRows);
+      checkReady();
+      const t1 = document.getElementById('nameListTitle1').value.trim() || '跑班一';
+      showStatus(`✅「${t1}」名單讀取成功！共 ${dualListData1.length} 筆姓名`, 'success');
+    } catch(err){
+      showStatus('❌ 讀取失敗: ' + err.message, 'error');
+    }
+  };
+  r.readAsArrayBuffer(f);
+});
+
+// 3. 雙跑班 - 檔案 2 監聽
+const nameListFile2 = document.getElementById('nameListFile2');
+nameListFile2.addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  document.getElementById('nameListFileName2').textContent = '已選擇: ' + f.name;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+      const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      dualListData2 = extractNamesFromRows(rawRows);
+      checkReady();
+      const t2 = document.getElementById('nameListTitle2').value.trim() || '跑班二';
+      showStatus(`✅「${t2}」名單讀取成功！共 ${dualListData2.length} 筆姓名`, 'success');
+    } catch(err){
+      showStatus('❌ 讀取失敗: ' + err.message, 'error');
+    }
+  };
+  r.readAsArrayBuffer(f);
+});
+
+// 4. 雙跑班 - 單一整合檔案監聽
+const nameListFileCombined = document.getElementById('nameListFileCombined');
+nameListFileCombined.addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  document.getElementById('nameListFileNameCombined').textContent = '已選擇: ' + f.name;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+      if(wb.SheetNames.length >= 2){
+        const s1Name = wb.SheetNames[0];
+        const s2Name = wb.SheetNames[1];
+        const rows1 = XLSX.utils.sheet_to_json(wb.Sheets[s1Name]);
+        const rows2 = XLSX.utils.sheet_to_json(wb.Sheets[s2Name]);
+        combinedData1 = extractNamesFromRows(rows1);
+        combinedData2 = extractNamesFromRows(rows2);
+        document.getElementById('nameListTitleCombined1').value = s1Name;
+        document.getElementById('nameListTitleCombined2').value = s2Name;
+        document.getElementById('sheetCount1').textContent = `工作表「${s1Name}」共 ${combinedData1.length} 人`;
+        document.getElementById('sheetCount2').textContent = `工作表「${s2Name}」共 ${combinedData2.length} 人`;
+        document.getElementById('detectedDualSheets').classList.remove('hidden');
+        showStatus(`✅ 成功讀取 2 個工作表：${s1Name} (${combinedData1.length}人)、${s2Name} (${combinedData2.length}人)`, 'success');
+      } else {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        let groupCol = null;
+        if(rows.length > 0){
+          for(const k of Object.keys(rows[0])){
+            const kt = k.trim();
+            if(['組別','跑班','跑班組別','抽離組別','類別','班別'].some(x => kt.includes(x))){
+              groupCol = k;
+              break;
+            }
+          }
+        }
+        if(groupCol){
+          const groups = {};
+          rows.forEach(row => {
+            const g = String(row[groupCol] || '').trim() || '未分組';
+            if(!groups[g]) groups[g] = [];
+            groups[g].push(row);
+          });
+          const gKeys = Object.keys(groups);
+          if(gKeys.length >= 2){
+            combinedData1 = extractNamesFromRows(groups[gKeys[0]]);
+            combinedData2 = extractNamesFromRows(groups[gKeys[1]]);
+            document.getElementById('nameListTitleCombined1').value = gKeys[0];
+            document.getElementById('nameListTitleCombined2').value = gKeys[1];
+            document.getElementById('sheetCount1').textContent = `組別「${gKeys[0]}」共 ${combinedData1.length} 人`;
+            document.getElementById('sheetCount2').textContent = `組別「${gKeys[1]}」共 ${combinedData2.length} 人`;
+            document.getElementById('detectedDualSheets').classList.remove('hidden');
+            showStatus(`✅ 依「${groupCol}」欄位分出：${gKeys[0]} (${combinedData1.length}人)、${gKeys[1]} (${combinedData2.length}人)`, 'success');
+          } else {
+            throw new Error('此檔案只有 1 個組別，無法拆分成 2 個跑班');
+          }
+        } else {
+          throw new Error('此檔案只有 1 個工作表，且未找到「組別」欄位。請切換為「分別上傳 2 個名單檔案」或確認 Excel 包含 2 個工作表');
+        }
+      }
+      checkReady();
+    } catch(err){
+      showStatus('❌ 讀取失敗: ' + err.message, 'error');
+    }
   };
   r.readAsArrayBuffer(f);
 });
@@ -163,8 +455,25 @@ function readCSV(file){
   };
   enc==='BIG5'?r.readAsArrayBuffer(file):r.readAsText(file,'UTF-8');
 }
+
 function checkReady(){
-  processBtn.disabled=currentMode==='classOnly'?!csvData:!(nameListData&&csvData);
+  if(currentMode === 'classOnly'){
+    processBtn.disabled = !csvData;
+    return;
+  }
+  if(!csvData){
+    processBtn.disabled = true;
+    return;
+  }
+  if(pullOutCount === 1){
+    processBtn.disabled = !(singleListData && singleListData.length > 0);
+  } else {
+    if(dualSource === 'twoFiles'){
+      processBtn.disabled = !(dualListData1 && dualListData1.length > 0 && dualListData2 && dualListData2.length > 0);
+    } else {
+      processBtn.disabled = !(combinedData1 && combinedData1.length > 0 && combinedData2 && combinedData2.length > 0);
+    }
+  }
 }
 
 function classKey(n){
@@ -208,7 +517,7 @@ function processClassOnly(){
     }
     if(!Object.keys(map).length) throw new Error('沒有班級資料');
     const sorted=sortCls(Object.keys(map));
-    g_printData={headers:hdrs, groups:sorted.map(cn=>({title:cn,rows:map[cn].slice(1)}))};
+    g_printData={headers:hdrs, groups:sorted.map(cn=>({title:cn,rows:map[cn].slice(1),isPullOut:false}))};
     buildDownloadSection(map,null,null);
     showStatus(`✅ 完成！共 ${sorted.length} 個班級`,'success');
   }catch(e){showStatus('❌ '+e.message,'error');}
@@ -220,31 +529,145 @@ function processNameList(){
     const hi=findHeaderRow();
     if(hi<0) throw new Error('找不到表頭');
     const hdrs=csvData[hi];
-    const nameSet=new Set(nameListData.map(x=>x['姓名']?x['姓名'].trim():'').filter(Boolean));
-    const matched=[hdrs], remain={};
-    for(let i=hi+1;i<csvData.length;i++){
-      const r=csvData[i];
-      if(r&&r.length>6&&r[6]&&r[6].trim()){
-        const nm=r[6].trim(), cn=r[3]||'未知班級';
-        if(nameSet.has(nm)) matched.push(r);
-        else{ if(!remain[cn]) remain[cn]=[hdrs]; remain[cn].push(r); }
+
+    if(pullOutCount === 1){
+      const t1 = (document.getElementById('nameListTitleSingle')?.value || '').trim() || '跑班學生';
+      if(!singleListData || !singleListData.length) throw new Error(`請先上傳「${t1}」的名單檔案`);
+
+      const set1 = new Set();
+      singleListData.forEach(n => {
+        set1.add(n);
+        set1.add(normName(n));
+      });
+
+      const matched1 = [hdrs];
+      const remain = {};
+      const matchedNames1 = new Set();
+
+      for(let i=hi+1;i<csvData.length;i++){
+        const r=csvData[i];
+        if(r&&r.length>6&&r[6]&&r[6].trim()){
+          const rawNm=r[6].trim();
+          const nmNorm=normName(rawNm);
+          const cn=r[3]||'未知班級';
+          if(set1.has(rawNm) || set1.has(nmNorm)){
+            matched1.push(r);
+            matchedNames1.add(rawNm);
+            matchedNames1.add(nmNorm);
+          } else {
+            if(!remain[cn]) remain[cn]=[hdrs];
+            remain[cn].push(r);
+          }
+        }
       }
+
+      if(matched1.length < 2) throw new Error(`找不到符合「${t1}」名單的學生`);
+
+      const sorted=sortCls(Object.keys(remain));
+      g_printData={
+        headers:hdrs,
+        groups:[
+          {title:t1, rows:matched1.slice(1), isPullOut:true},
+          ...sorted.map(cn=>({title:cn, rows:remain[cn].slice(1), isPullOut:false}))
+        ]
+      };
+
+      const unmatched1 = singleListData.filter(n => !matchedNames1.has(n) && !matchedNames1.has(normName(n)));
+      buildDownloadSection(null, [
+        { title: t1, matched: matched1, totalList: singleListData.length, unmatched: unmatched1 }
+      ], remain);
+
+      let msg = `✅ 完成！找到 ${matched1.length - 1} 位「${t1}」學生`;
+      if(unmatched1.length > 0){
+        msg += `（注意：名單中有 ${unmatched1.length} 人未在成績檔中找到：${unmatched1.slice(0, 3).join('、')}${unmatched1.length > 3 ? '...' : ''}）`;
+      }
+      showStatus(msg, 'success');
+
+    } else { // pullOutCount === 2
+      let t1 = '', t2 = '', list1 = null, list2 = null;
+      if(dualSource === 'twoFiles'){
+        t1 = (document.getElementById('nameListTitle1')?.value || '').trim() || '跑班一';
+        t2 = (document.getElementById('nameListTitle2')?.value || '').trim() || '跑班二';
+        list1 = dualListData1;
+        list2 = dualListData2;
+      } else {
+        t1 = (document.getElementById('nameListTitleCombined1')?.value || '').trim() || '跑班一';
+        t2 = (document.getElementById('nameListTitleCombined2')?.value || '').trim() || '跑班二';
+        list1 = combinedData1;
+        list2 = combinedData2;
+      }
+
+      if(!list1 || !list1.length) throw new Error(`請先上傳「${t1}」的名單`);
+      if(!list2 || !list2.length) throw new Error(`請先上傳「${t2}」的名單`);
+
+      const set1 = new Set();
+      list1.forEach(n => { set1.add(n); set1.add(normName(n)); });
+      const set2 = new Set();
+      list2.forEach(n => { set2.add(n); set2.add(normName(n)); });
+
+      const matched1 = [hdrs];
+      const matched2 = [hdrs];
+      const remain = {};
+      const matchedNames1 = new Set();
+      const matchedNames2 = new Set();
+
+      for(let i=hi+1;i<csvData.length;i++){
+        const r=csvData[i];
+        if(r&&r.length>6&&r[6]&&r[6].trim()){
+          const rawNm=r[6].trim();
+          const nmNorm=normName(rawNm);
+          const cn=r[3]||'未知班級';
+
+          if(set1.has(rawNm) || set1.has(nmNorm)){
+            matched1.push(r);
+            matchedNames1.add(rawNm);
+            matchedNames1.add(nmNorm);
+          } else if(set2.has(rawNm) || set2.has(nmNorm)){
+            matched2.push(r);
+            matchedNames2.add(rawNm);
+            matchedNames2.add(nmNorm);
+          } else {
+            if(!remain[cn]) remain[cn]=[hdrs];
+            remain[cn].push(r);
+          }
+        }
+      }
+
+      if(matched1.length < 2 && matched2.length < 2){
+        throw new Error('找不到符合任何跑班名單的學生');
+      }
+
+      const sorted = sortCls(Object.keys(remain));
+      g_printData = {
+        headers: hdrs,
+        groups: [
+          { title: t1, rows: matched1.slice(1), isPullOut: true },
+          { title: t2, rows: matched2.slice(1), isPullOut: true },
+          ...sorted.map(cn => ({ title: cn, rows: remain[cn].slice(1), isPullOut: false }))
+        ]
+      };
+
+      const unmatched1 = list1.filter(n => !matchedNames1.has(n) && !matchedNames1.has(normName(n)));
+      const unmatched2 = list2.filter(n => !matchedNames2.has(n) && !matchedNames2.has(normName(n)));
+
+      buildDownloadSection(null, [
+        { title: t1, matched: matched1, totalList: list1.length, unmatched: unmatched1 },
+        { title: t2, matched: matched2, totalList: list2.length, unmatched: unmatched2 }
+      ], remain);
+
+      let msg = `✅ 完成！找到「${t1}」${matched1.length - 1} 人、「${t2}」${matched2.length - 1} 人`;
+      const allUnmatchedCount = unmatched1.length + unmatched2.length;
+      if(allUnmatchedCount > 0){
+        msg += `（注意：共有 ${allUnmatchedCount} 位名單學生未在成績檔中找到）`;
+      }
+      showStatus(msg, 'success');
     }
-    if(matched.length<2) throw new Error('找不到符合跑班名單的學生');
-    const sorted=sortCls(Object.keys(remain));
-    g_printData={
-      headers:hdrs,
-      groups:[
-        {title:'跑班學生',rows:matched.slice(1)},
-        ...sorted.map(cn=>({title:cn,rows:remain[cn].slice(1)}))
-      ]
-    };
-    buildDownloadSection(null,matched,remain);
-    showStatus(`✅ 完成！找到 ${matched.length-1} 位跑班學生`,'success');
-  }catch(e){showStatus('❌ '+e.message,'error');}
+  }catch(e){
+    showStatus('❌ ' + e.message, 'error');
+  }
 }
 
-function buildDownloadSection(byClass,matched,remain){
+function buildDownloadSection(byClass, matchedGroups, remain){
   downloadSection.style.display='block';
   downloadSection.innerHTML='';
 
@@ -274,16 +697,33 @@ function buildDownloadSection(byClass,matched,remain){
     ri.innerHTML=`<h3>✅ 班級分檔結果</h3><ul>
       <li>班級數量：${sorted.length} 個，共 ${sorted.reduce((s,cn)=>s+byClass[cn].length-1,0)} 人</li>
       ${sorted.map(cn=>`<li>${cn}：${byClass[cn].length-1} 人</li>`).join('')}</ul>`;
-    sorted.forEach(cn=>mkDlBtn(`${cn}.csv`,Papa.unparse(byClass[cn]),`📥 ${cn} (${byClass[cn].length-1}人)`));
+    downloadSection.appendChild(ri);
+    sorted.forEach(cn=>mkDlBtn(`${cn}.csv`,Papa.unparse(byClass[cn]),`📥 下載 ${cn} (${byClass[cn].length-1}人)`));
   }else{
-    const mc=matched.length-1, sorted=sortCls(Object.keys(remain));
+    const sorted=sortCls(Object.keys(remain));
+    let groupSummaryHtml = '';
+    matchedGroups.forEach(g => {
+      const mc = g.matched.length - 1;
+      let extra = '';
+      if(g.unmatched && g.unmatched.length > 0){
+        extra = ` <span style="color:#d9534f;font-size:0.9em;">(名單 ${g.totalList} 人，${g.unmatched.length} 人未在成績檔中)</span>`;
+      }
+      groupSummaryHtml += `<li><strong>${g.title}</strong>：${mc} 人${extra}</li>`;
+    });
+
     ri.innerHTML=`<h3>✅ 跑班比對結果</h3><ul>
-      <li>跑班學生：${mc} 人</li><li>原班級：${sorted.length} 個</li>
-      ${sorted.map(cn=>`<li>${cn}：${remain[cn].length-1} 人</li>`).join('')}</ul>`;
-    mkDlBtn('跑班學生成績.csv',Papa.unparse(matched),`📥 跑班學生 (${mc}人)`);
-    sorted.forEach(cn=>mkDlBtn(`${cn}_成績.csv`,Papa.unparse(remain[cn]),`📥 ${cn} (${remain[cn].length-1}人)`));
+      ${groupSummaryHtml}
+      <li><strong>原班級保留</strong>：${sorted.length} 個班級</li>
+      ${sorted.map(cn=>`<li>${cn}：${remain[cn].length-1} 人</li>`).join('')}
+    </ul>`;
+    downloadSection.appendChild(ri);
+
+    matchedGroups.forEach(g => {
+      const mc = g.matched.length - 1;
+      mkDlBtn(`${g.title}_成績.csv`, Papa.unparse(g.matched), `📥 下載 ${g.title} (${mc}人)`);
+    });
+    sorted.forEach(cn=>mkDlBtn(`${cn}_成績.csv`,Papa.unparse(remain[cn]),`📥 下載 ${cn} (${remain[cn].length-1}人)`));
   }
-  downloadSection.appendChild(ri);
 }
 
 function mkDlBtn(fn,content,text){
@@ -336,7 +776,7 @@ function calcAllStats(){
   return g_printData.groups.map(g=>{
     const scores=getScores(g.rows,g_dbCol.score);
     const st=calcStats(scores);
-    return{title:g.title,scores,...(st||{n:0})};
+    return{title:g.title,scores,isPullOut:!!g.isPullOut,...(st||{n:0})};
   });
 }
 function calcZonePct(scores,fs){
@@ -453,7 +893,143 @@ const HIST_BINS  =[[0,10],[10,20],[20,30],[30,40],[40,50],[50,60],[60,70],[70,80
 const HIST_LABELS=['0–9','10–19','20–29','30–39','40–49','50–59','60–69','70–79','80–89','90–100'];
 function histColor(lo){ return lo>=60?'#2E7D32':lo>=50?'#E65100':'#B71C1C'; }
 
+function drawHistPureCanvas(canvas, scores){
+  const dpr = window.devicePixelRatio || 1;
+  const W = 430, H = 220;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  const padL = 36, padR = 15, padT = 20, padB = 35;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  const binData = HIST_BINS.map(([lo, hi]) => scores.filter(s => s >= lo && s < hi).length);
+  const maxCount = Math.max(...binData, 5);
+
+  ctx.font = '9px Microsoft JhengHei, Arial';
+  ctx.textAlign = 'right';
+  const ySteps = maxCount <= 5 ? maxCount : 5;
+  for(let i = 0; i <= ySteps; i++){
+    const val = Math.round(i * (maxCount / ySteps));
+    const y = padT + plotH * (1 - val / maxCount);
+    ctx.strokeStyle = '#eee'; ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+    ctx.fillStyle = '#888';
+    ctx.fillText(val, padL - 5, y + 3);
+  }
+
+  const n = binData.length;
+  const slotW = plotW / n;
+  const bw = slotW * 0.75;
+
+  binData.forEach((cnt, i) => {
+    const x = padL + i * slotW + (slotW - bw) / 2;
+    const barH = (cnt / maxCount) * plotH;
+    const y = padT + plotH - barH;
+    const color = histColor(HIST_BINS[i][0]);
+
+    ctx.fillStyle = color + 'CC';
+    ctx.fillRect(x, y, bw, barH);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, bw, barH);
+
+    if(cnt > 0){
+      ctx.fillStyle = '#333';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 9px Microsoft JhengHei, Arial';
+      ctx.fillText(cnt, x + bw / 2, y - 3);
+    }
+
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.font = '8.5px Microsoft JhengHei, Arial';
+    ctx.fillText(HIST_LABELS[i], x + bw / 2, H - padB + 14);
+  });
+
+  ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH);
+  ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
+}
+
+function drawStackPureCanvas(canvas, allSt, fs){
+  const dpr = window.devicePixelRatio || 1;
+  const W = 430, H = 220;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  const padL = 36, padR = 80, padT = 20, padB = 35;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  ctx.font = '9px Microsoft JhengHei, Arial';
+  ctx.textAlign = 'right';
+  for(let v = 0; v <= 100; v += 25){
+    const y = padT + plotH * (1 - v / 100);
+    ctx.strokeStyle = '#eee'; ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+    ctx.fillStyle = '#888';
+    ctx.fillText(v + '%', padL - 4, y + 3);
+  }
+
+  const valid = allSt.filter(s => s.n > 0);
+  const n = valid.length;
+  if(!n) return;
+  const slotW = plotW / n;
+  const bw = Math.min(slotW * 0.7, 36);
+
+  valid.forEach((s, i) => {
+    const x = padL + i * slotW + (slotW - bw) / 2;
+    const zPct = calcZonePct(s.scores, fs);
+
+    let curY = padT + plotH;
+    for(let zi = 5; zi >= 0; zi--){
+      const pct = zPct[zi];
+      if(pct <= 0) continue;
+      const h = (pct / 100) * plotH;
+      curY -= h;
+      ctx.fillStyle = ZONE_COLORS[zi] + 'DD';
+      ctx.fillRect(x, curY, bw, h);
+      ctx.strokeStyle = ZONE_COLORS[zi];
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x, curY, bw, h);
+    }
+
+    ctx.fillStyle = '#444';
+    ctx.textAlign = 'center';
+    ctx.font = '9px Microsoft JhengHei, Arial';
+    ctx.fillText(s.title, x + bw / 2, H - padB + 14);
+  });
+
+  const legX = W - padR + 10;
+  const legY = padT + 10;
+  ctx.textAlign = 'left';
+  ctx.font = '8.5px Microsoft JhengHei, Arial';
+  ZONE_LABELS.forEach((lbl, zi) => {
+    const y = legY + zi * 18;
+    ctx.fillStyle = ZONE_COLORS[zi];
+    ctx.fillRect(legX, y, 10, 10);
+    ctx.fillStyle = '#444';
+    ctx.fillText(lbl, legX + 14, y + 8);
+  });
+
+  ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH);
+  ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
+}
+
 function buildHistChart(canvas, scores){
+  if(typeof Chart === 'undefined') return null;
   const binData=HIST_BINS.map(([lo,hi])=>scores.filter(s=>s>=lo&&s<hi).length);
   return new Chart(canvas,{
     type:'bar',
@@ -478,6 +1054,7 @@ function buildHistChart(canvas, scores){
 }
 
 function buildStackChart(canvas, allSt, fs){
+  if(typeof Chart === 'undefined') return null;
   const valid=allSt.filter(s=>s.n>0);
   const datasets=ZONE_LABELS.map((lbl,zi)=>({
     label:lbl,
@@ -511,79 +1088,132 @@ async function printAllClassReports(){
   g_dbCol=getDbCol(g_printData.headers);
   if(g_dbCol.score<0){showStatus('❌ 找不到成績欄位','error');return;}
 
-  const allScores=[];
-  g_printData.groups.forEach(g=>g.rows.forEach(r=>{
-    const s=parseFloat(r[g_dbCol.score]); if(!isNaN(s)&&s>=0) allScores.push(s);
-  }));
-  allScores.sort((a,b)=>a-b);
-  g_dbFiveStd=FS_PCTS.map(p=>Math.round(pctile(allScores,p)));
-  g_dbAllStats=calcAllStats();
-  const schoolSt=calcStats(allScores);
-
-  const total=g_printData.groups.filter((_,i)=>g_dbAllStats[i]&&g_dbAllStats[i].n>0).length;
-  showStatus(`⏳ 正在產生圖表，共 ${total} 個班級，請稍候...`,'info');
-
-  const container=document.createElement('div');
-  container.style.cssText=
+  let win = null;
+  const container = document.createElement('div');
+  container.style.cssText =
     'position:fixed;left:-9999px;top:0;width:900px;overflow:visible;z-index:-1;';
   document.body.appendChild(container);
 
-  const classPages=[];
+  try {
+    const allScores=[];
+    g_printData.groups.forEach(g=>g.rows.forEach(r=>{
+      const s=parseFloat(r[g_dbCol.score]); if(!isNaN(s)&&s>=0) allScores.push(s);
+    }));
+    allScores.sort((a,b)=>a-b);
+    g_dbFiveStd=FS_PCTS.map(p=>Math.round(pctile(allScores,p)));
+    g_dbAllStats=calcAllStats();
+    const schoolSt=calcStats(allScores);
 
-  for(let idx=0;idx<g_printData.groups.length;idx++){
-    const group =g_printData.groups[idx];
-    const curSt =g_dbAllStats[idx];
-    if(!curSt||!curSt.n) continue;
+    const validGroups = g_printData.groups.filter((_,i)=>g_dbAllStats[i]&&g_dbAllStats[i].n>0);
+    const total = validGroups.length;
+    if(!total) throw new Error('沒有可列印的班級資料');
 
-    showStatus(`⏳ 正在處理 ${group.title}（${idx+1}/${g_printData.groups.length}）...`,'info');
+    showStatus(`⏳ 正在產生圖表，共 ${total} 個班級，請稍候...`,'info');
 
-    const bpCvs=document.createElement('canvas');
-    bpCvs.style.cssText='display:block;width:860px;height:320px;';
-    container.appendChild(bpCvs);
-    drawBoxPlot(bpCvs,g_dbAllStats,g_dbFiveStd,idx);
-    const bpImg=bpCvs.toDataURL('image/png');
-    container.removeChild(bpCvs);
+    // 提早開啟列印視窗，避免被瀏覽器攔截彈出視窗
+    win = window.open('','_blank','width=960,height=800');
+    if(win){
+      win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>準備報表中...</title></head><body style="font-family:Microsoft JhengHei,sans-serif;padding:40px;text-align:center;color:#333;"><h2>⏳ 正在產生各班成績分析報告，請稍候...</h2></body></html>');
+    }
 
-    const hCvs=document.createElement('canvas');
-    hCvs.style.cssText='display:block;width:430px;height:220px;';
-    container.appendChild(hCvs);
-    const hChart=buildHistChart(hCvs,curSt.scores);
-    await waitFrame();
-    const hImg=hCvs.toDataURL('image/png');
-    hChart.destroy(); container.removeChild(hCvs);
+    const classPages=[];
 
-    const sCvs=document.createElement('canvas');
-    sCvs.style.cssText='display:block;width:430px;height:220px;';
-    container.appendChild(sCvs);
-    const sChart=buildStackChart(sCvs,g_dbAllStats,g_dbFiveStd);
-    await waitFrame();
-    const sImg=sCvs.toDataURL('image/png');
-    sChart.destroy(); container.removeChild(sCvs);
+    for(let idx=0;idx<g_printData.groups.length;idx++){
+      const group =g_printData.groups[idx];
+      const curSt =g_dbAllStats[idx];
+      if(!curSt||!curSt.n) continue;
 
-    classPages.push(buildOneClassHTML(idx,group,curSt,schoolSt,bpImg,hImg,sImg));
+      showStatus(`⏳ 正在處理 ${group.title}（${idx+1}/${g_printData.groups.length}）...`,'info');
+
+      // 1. 盒鬚圖 (Canvas 原生繪製)
+      const bpCvs=document.createElement('canvas');
+      bpCvs.style.cssText='display:block;width:860px;height:320px;';
+      container.appendChild(bpCvs);
+      drawBoxPlot(bpCvs,g_dbAllStats,g_dbFiveStd,idx);
+      const bpImg=bpCvs.toDataURL('image/png');
+      container.removeChild(bpCvs);
+
+      // 2. 直方圖 (優先使用 Chart.js，若無則自動切換原生 Canvas)
+      const hCvs=document.createElement('canvas');
+      hCvs.style.cssText='display:block;width:430px;height:220px;';
+      container.appendChild(hCvs);
+      let hImg = '';
+      if(typeof Chart !== 'undefined'){
+        try {
+          const hChart = buildHistChart(hCvs, curSt.scores);
+          await waitFrame();
+          hImg = hCvs.toDataURL('image/png');
+          hChart.destroy();
+        } catch(e) {
+          drawHistPureCanvas(hCvs, curSt.scores);
+          hImg = hCvs.toDataURL('image/png');
+        }
+      } else {
+        drawHistPureCanvas(hCvs, curSt.scores);
+        hImg = hCvs.toDataURL('image/png');
+      }
+      container.removeChild(hCvs);
+
+      // 3. 堆疊圖 (優先使用 Chart.js，若無則自動切換原生 Canvas)
+      const sCvs=document.createElement('canvas');
+      sCvs.style.cssText='display:block;width:430px;height:220px;';
+      container.appendChild(sCvs);
+      let sImg = '';
+      if(typeof Chart !== 'undefined'){
+        try {
+          const sChart = buildStackChart(sCvs, g_dbAllStats, g_dbFiveStd);
+          await waitFrame();
+          sImg = sCvs.toDataURL('image/png');
+          sChart.destroy();
+        } catch(e) {
+          drawStackPureCanvas(sCvs, g_dbAllStats, g_dbFiveStd);
+          sImg = sCvs.toDataURL('image/png');
+        }
+      } else {
+        drawStackPureCanvas(sCvs, g_dbAllStats, g_dbFiveStd);
+        sImg = sCvs.toDataURL('image/png');
+      }
+      container.removeChild(sCvs);
+
+      classPages.push(buildOneClassHTML(idx,group,curSt,schoolSt,bpImg,hImg,sImg));
+    }
+
+    if(!classPages.length) throw new Error('沒有可列印的班級資料');
+
+    if(!win || win.closed){
+      win = window.open('','_blank','width=960,height=800');
+    }
+    if(!win){
+      showStatus('⚠️ 已完成分析！但瀏覽器阻擋了彈出視窗，請在網址列允許彈出視窗後再次點擊列印','error');
+      return;
+    }
+
+    win.document.open();
+    win.document.write(buildFullPrintHTML(classPages));
+    win.document.close();
+    win.focus();
+    setTimeout(()=>win.print(), 700);
+    showStatus(`✅ 已開啟列印視窗，共 ${classPages.length} 個班級`,'success');
+
+  } catch(err) {
+    if(win && !win.closed) win.close();
+    showStatus('❌ 產生報告失敗：' + err.message, 'error');
+    console.error('printAllClassReports error:', err);
+  } finally {
+    if(container.parentNode){
+      container.parentNode.removeChild(container);
+    }
   }
-
-  document.body.removeChild(container);
-
-  if(!classPages.length){showStatus('❌ 沒有可列印的班級資料','error');return;}
-
-  const win=window.open('','_blank','width=960,height=800');
-  if(!win){showStatus('❌ 請允許瀏覽器彈出視窗','error');return;}
-
-  win.document.write(buildFullPrintHTML(classPages));
-  win.document.close(); win.focus();
-  setTimeout(()=>win.print(),700);
-  showStatus(`✅ 已開啟列印視窗，共 ${classPages.length} 個班級`,'success');
 }
 
 function buildOneClassHTML(idx, group, curSt, schoolSt, bpImg, histImg, stackImg){
-  const isKopan=group.title==='跑班學生';
-  const allSt  =g_dbAllStats;
-  const fs     =g_dbFiveStd;
-  const col    =g_dbCol;
-  const today  =new Date().toLocaleDateString('zh-TW');
+  const isKopan = !!group.isPullOut || group.title==='跑班學生';
+  const allSt   = g_dbAllStats;
+  const fs      = g_dbFiveStd;
+  const col     = g_dbCol;
+  const today   = new Date().toLocaleDateString('zh-TW');
 
-  const rankList=[...allSt].filter(s=>s.title!=='跑班學生'&&s.n>0)
+  const rankList=[...allSt].filter(s=>!s.isPullOut && s.title!=='跑班學生' && s.n>0)
     .sort((a,b)=>b.mean-a.mean);
   const getRank=t=>{ const i=rankList.findIndex(s=>s.title===t); return i>=0?`第${i+1}名`:'—'; };
   let classRank=null;
@@ -601,7 +1231,7 @@ function buildOneClassHTML(idx, group, curSt, schoolSt, bpImg, histImg, stackImg
       <td>${schoolSt?schoolSt.mean.toFixed(2):'—'}</td>
       <td>${diffStr}</td><td>${s.max}</td><td>${s.min}</td>
       <td>${s.std.toFixed(2)}</td><td>${s.median.toFixed(1)}</td>
-      <td>${s.title==='跑班學生'?'—':getRank(s.title)}</td>
+      <td>${(s.isPullOut || s.title==='跑班學生') ? '—' : getRank(s.title)}</td>
     </tr>`;
   }).join('');
   const schoolRow=schoolSt?`<tr style="background:#E8EAF6;font-weight:bold;">
@@ -648,7 +1278,7 @@ function buildOneClassHTML(idx, group, curSt, schoolSt, bpImg, histImg, stackImg
 
   return`
 <div class="class-page">
-  <h1>${isKopan?'🔄 跑班學生':'🏫 '+group.title} 成績分析${rankBadge}</h1>
+  <h1>${isKopan ? ('🔄 ' + group.title) : ('🏫 ' + group.title)} 成績分析${rankBadge}</h1>
   <div class="sub-info">
     列印日期：${today}&emsp;應考人數：${curSt.n} 人&emsp;
     班級平均：<strong>${curSt.mean.toFixed(2)}</strong> 分&emsp;
@@ -772,9 +1402,9 @@ table{width:100%;border-collapse:collapse;}
 .chart-box{border:1px solid #e0e0e0;border-radius:5px;
            padding:8px;}
 .chart-title{font-size:8px;font-weight:bold;
-             margin-bottom:5px;
-             color:#333;border-bottom:1px solid #eee;
-             padding-bottom:4px;}
+              margin-bottom:5px;
+              color:#333;border-bottom:1px solid #eee;
+              padding-bottom:4px;}
 .chart-box img{width:100%;display:block;}
 
 .two-col{display:grid;grid-template-columns:1fr 1fr;
@@ -820,8 +1450,9 @@ function printAllClasses(){
   let pagesHTML='';
   for(const group of g_printData.groups){
     const cn=group.title;
+    const isKopan = !!group.isPullOut || group.title==='跑班學生';
     const students=[...group.rows].sort((a,b)=>{
-      if(cn==='跑班學生'){
+      if(isKopan){
         const c=(a[col.classShort]||'').localeCompare(b[col.classShort]||'','zh-TW');
         if(c) return c;
       }
